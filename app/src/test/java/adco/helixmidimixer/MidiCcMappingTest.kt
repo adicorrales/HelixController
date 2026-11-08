@@ -22,26 +22,33 @@ class MidiCcMappingTest {
         assertEquals(57, g1Ch0.muteCc)
         assertEquals(80, g1Ch0.soloCc)
 
-        // Test Output Group 1 (1/4") Channel 10 (BT Audio)
-        val g1Ch10 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 10)
-        assertEquals(21, g1Ch10.volumeCc)
-        assertEquals(44, g1Ch10.panCc)
-        assertEquals(67, g1Ch10.muteCc)
-        assertEquals(90, g1Ch10.soloCc)
+        // Test Output Group 1 (1/4") Channel 1 (Route 1A)
+        val g1Ch1 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 1)
+        assertEquals(12, g1Ch1.volumeCc)
+        assertEquals(35, g1Ch1.panCc)
+        assertEquals(58, g1Ch1.muteCc)
+        assertEquals(81, g1Ch1.soloCc)
 
-        // Test Output Group 2 (XLR) Channel 0 (Home) - index offset 11
+        // Test Output Group 1 (1/4") Channel 14 (BT Audio)
+        val g1Ch14 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 14)
+        assertEquals(28, g1Ch14.volumeCc)
+        assertEquals(51, g1Ch14.panCc)
+        assertEquals(74, g1Ch14.muteCc)
+        assertEquals(97, g1Ch14.soloCc)
+
+        // Test Output Group 2 (XLR) Channel 0 (Home) - index offset 15
         val g2Ch0 = mapping.getChannelCc(OutputGroup.XLR, 0)
-        assertEquals(22, g2Ch0.volumeCc)
-        assertEquals(45, g2Ch0.panCc)
-        assertEquals(68, g2Ch0.muteCc)
-        assertEquals(91, g2Ch0.soloCc)
+        assertEquals(26, g2Ch0.volumeCc)
+        assertEquals(49, g2Ch0.panCc)
+        assertEquals(72, g2Ch0.muteCc)
+        assertEquals(95, g2Ch0.soloCc)
 
-        // Test Output Group 2 (XLR) Channel 7 - Vol CC 29, Pan CC 52, Mute CC 75, Solo CC 98
+        // Test Output Group 2 (XLR) Channel 7 - index offset 15
         val g2Ch7 = mapping.getChannelCc(OutputGroup.XLR, 7)
-        assertEquals(29, g2Ch7.volumeCc)
-        assertEquals(52, g2Ch7.panCc)
-        assertEquals(75, g2Ch7.muteCc)
-        assertEquals(98, g2Ch7.soloCc)
+        assertEquals(11 + 7 + 15, g2Ch7.volumeCc)
+        assertEquals(34 + 7 + 15, g2Ch7.panCc)
+        assertEquals(57 + 7 + 15, g2Ch7.muteCc)
+        assertEquals(80 + 7 + 15, g2Ch7.soloCc)
     }
 
     @Test

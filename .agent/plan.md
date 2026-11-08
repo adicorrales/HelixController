@@ -44,7 +44,7 @@ Funcionalidades clave:
 - **Persistence**: Jetpack DataStore (Preferences DataStore for channel names, states, and MIDI CC maps)
 
 ## Implementation Steps
-**Total Duration:** 35m 40s
+**Total Duration:** 41m 1s
 
 ### Task_1_Core_Models_DataStore_And_MidiEngine: Setup data models for 3 Output Groups, 11 Channels per group, channel color coding, MIDI CC mappings, DataStore repository for state persistence (channel names, Mute/Solo, CC maps), and BLE MIDI manager for CME WIDI Master connectivity.
 - **Status:** COMPLETED
@@ -85,4 +85,27 @@ Funcionalidades clave:
   - app does not crash
   - All project requirements verified: BLE MIDI integration, 3 Output Groups, 11 Channels, persistence, dark Helix matrix styling, and adaptive layout
 - **Duration:** 3m 30s
+
+### Task_5_Channel_Cc_Mappings_And_Ui_Refinements: Update Home channel defaults ('All paths') and route selectors (1A, 1B, 2A, 2B) with correct Line 6 Helix Stadium MIDI CC mappings (Home All paths, 1A, 1B, 2A, 2B, BT audio Vol CC28, Pan CC51, Mute CC74). Remove CC command badges from channel strips. Fix Pan slider behavior (0=Left, 64=Center, 127=Right) and prevent sliding feedback issues. Ensure Volume (0-127), Pan (0-127), Mute/Solo (toggle >=64), and Clear Solo CC logic adhere strictly to specs.
+- **Status:** COMPLETED
+- **Updates:** Updated Home channel defaults ('All paths') and route selectors (1A, 1B, 2A, 2B) with correct Line 6 Helix Stadium MIDI CC mappings. Removed CC command badges from main interface channel strips. Fixed Pan slider mapping (0=Left, 64=Center, 127=Right) and prevented feedback loops. Configured Mute/Solo toggle on >=64 and Clear Solo support. Unit tests and gradle build passed.
+- **Acceptance Criteria:**
+  - Home channel defaults to 'All paths' and route selectors (1A, 1B, 2A, 2B) send correct Line 6 Helix Stadium MIDI CC mappings
+  - CC command badges removed from main interface channel strips
+  - Pan slider behavior correctly mapped to 0 (Left), 64 (Center), 127 (Right) with feedback prevention
+  - Volume, Mute/Solo (toggle >=64), and Clear Solo CC logic adhere strictly to specs
+  - build pass
+- **Duration:** 2m 58s
+
+### Task_6_Window_Insets_Layout_Refinements_And_Verification: Fix top status bar window insets overlap for top text and buttons. Expand channels to fill screen horizontally in landscape mode. Split mixer into top half and bottom half in portrait mode. Run and verify application stability, layout correctness, and MIDI communication.
+- **Status:** COMPLETED
+- **Updates:** Successfully applied window insets padding to avoid status bar overlap. Implemented landscape horizontal expansion layout and portrait half-screen split layout (top half and bottom half). Removed CC badges from main channel strips. Verified stability, unit tests (12/12 passed), and emulator QA testing.
+- **Acceptance Criteria:**
+  - Top status bar window insets padding correctly applied to prevent overlap
+  - Landscape mode expands channel strips to fill available screen width horizontally
+  - Portrait mode splits mixer cleanly into top half and bottom half
+  - make sure all existing tests pass
+  - build pass
+  - app does not crash
+- **Duration:** 2m 23s
 

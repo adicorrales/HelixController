@@ -31,22 +31,31 @@ data class MidiCcMapping(
         fun defaultChannelCc(group: OutputGroup, channelIndex: Int): ChannelCc {
             val groupOffset = when (group) {
                 OutputGroup.OUTPUT_1_4 -> 0
-                OutputGroup.XLR -> 11
-                OutputGroup.PHONES -> 22
+                OutputGroup.XLR -> 15
+                OutputGroup.PHONES -> 30
             }
-            val index = groupOffset + channelIndex
-            return ChannelCc(
-                volumeCc = 11 + index,
-                panCc = 34 + index,
-                muteCc = 57 + index,
-                soloCc = 80 + index
-            )
+            return if (channelIndex == 14) {
+                ChannelCc(
+                    volumeCc = 28 + groupOffset,
+                    panCc = 51 + groupOffset,
+                    muteCc = 74 + groupOffset,
+                    soloCc = 97 + groupOffset
+                )
+            } else {
+                val idx = channelIndex.coerceIn(0, 13)
+                ChannelCc(
+                    volumeCc = 11 + idx + groupOffset,
+                    panCc = 34 + idx + groupOffset,
+                    muteCc = 57 + idx + groupOffset,
+                    soloCc = 80 + idx + groupOffset
+                )
+            }
         }
 
         fun createDefaultMappings(): Map<String, ChannelCc> {
             val map = mutableMapOf<String, ChannelCc>()
             for (group in OutputGroup.entries) {
-                for (ch in 0..10) {
+                for (ch in 0..14) {
                     map[makeKey(group, ch)] = defaultChannelCc(group, ch)
                 }
             }

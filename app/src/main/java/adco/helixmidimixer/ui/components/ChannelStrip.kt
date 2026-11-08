@@ -149,7 +149,7 @@ fun ChannelStrip(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 2. Pan / Balance Control Button Box
+            // 2. Pan / Balance Control Button Box (No CC badge per UI refinements requirement)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -157,7 +157,7 @@ fun ChannelStrip(
                     .background(HelixBadgeBg)
                     .border(0.5.dp, HelixCardBorder, RoundedCornerShape(6.dp))
                     .clickable(onClick = onOpenPanDialog)
-                    .padding(vertical = 4.dp, horizontal = 2.dp),
+                    .padding(vertical = 6.dp, horizontal = 2.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -176,14 +176,6 @@ fun ChannelStrip(
                             color = accentColor
                         ),
                         maxLines = 1
-                    )
-                    Text(
-                        text = "CC $panCc",
-                        style = MaterialTheme.typography.labelSmall.copy(
-                            fontSize = 8.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = HelixBadgeText
-                        )
                     )
                 }
             }
@@ -278,6 +270,7 @@ private fun BottomChannelArea(
 ) {
     val icon: ImageVector = when (channelState.config.type) {
         ChannelType.HOME -> Icons.Rounded.Home
+        ChannelType.ROUTE -> Icons.Rounded.Home
         ChannelType.SONG_MASTER -> Icons.Rounded.LibraryMusic
         ChannelType.SONG_CHANNEL -> Icons.Rounded.Audiotrack
         ChannelType.BT_AUDIO -> Icons.Rounded.Bluetooth
@@ -302,14 +295,32 @@ private fun BottomChannelArea(
 
         when (channelState.config.type) {
             ChannelType.HOME -> {
-                // Dropdown selector for 4 routes (1A, 1B, 2A, 2B)
-                HomeRouteDropdown(
-                    selectedRoute = channelState.homeRoute,
-                    onRouteSelected = onHomeRouteChanged
+                Text(
+                    text = channelState.effectiveName,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HelixTextPrimary
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
+                )
+            }
+            ChannelType.ROUTE -> {
+                Text(
+                    text = channelState.effectiveName,
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = HelixTextPrimary
+                    ),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    textAlign = TextAlign.Center
                 )
             }
             ChannelType.SONG_CHANNEL -> {
-                // Editable label for Song 1..8
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -356,69 +367,12 @@ private fun BottomChannelArea(
     }
 }
 
-@Composable
-private fun HomeRouteDropdown(
-    selectedRoute: HomeRoute,
-    onRouteSelected: (HomeRoute) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
-
-    Box {
-        Row(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(HelixGreenHeader)
-                .clickable { expanded = true }
-                .padding(horizontal = 6.dp, vertical = 2.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Route ${selectedRoute.displayName}",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
-            )
-            Icon(
-                imageVector = Icons.Rounded.ArrowDropDown,
-                contentDescription = "Select Route",
-                tint = Color.White,
-                modifier = Modifier.size(14.dp)
-            )
-        }
-
-        DropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false },
-            modifier = Modifier.background(HelixBadgeBg)
-        ) {
-            HomeRoute.entries.forEach { route ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = "Route ${route.displayName}",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                color = if (route == selectedRoute) HelixGreenPrimary else HelixTextPrimary,
-                                fontWeight = if (route == selectedRoute) FontWeight.Bold else FontWeight.Normal
-                            )
-                        )
-                    },
-                    onClick = {
-                        onRouteSelected(route)
-                        expanded = false
-                    }
-                )
-            }
-        }
-    }
-}
-
 private fun getChannelHeaderTag(channelState: ChannelState): String {
     return when (channelState.config.type) {
         ChannelType.HOME -> "HOME"
+        ChannelType.ROUTE -> channelState.config.defaultName.uppercase()
         ChannelType.SONG_MASTER -> "MASTER"
-        ChannelType.SONG_CHANNEL -> "SONG ${channelState.channelIndex - 1}"
+        ChannelType.SONG_CHANNEL -> "SONG ${channelState.channelIndex - 5}"
         ChannelType.BT_AUDIO -> "BT AUDIO"
     }
 }
@@ -442,17 +396,17 @@ fun ChannelStripPreview() {
             ChannelStrip(
                 channelState = ChannelState(
                     group = OutputGroup.OUTPUT_1_4,
-                    channelIndex = 2,
+                    channelIndex = 6,
                     customName = "Guitar 1",
                     volume = 100,
                     pan = 64,
                     isMuted = false,
                     isSoloed = false
                 ),
-                volumeCc = 13,
-                panCc = 36,
-                muteCc = 59,
-                soloCc = 82,
+                volumeCc = 17,
+                panCc = 40,
+                muteCc = 63,
+                soloCc = 86,
                 onVolumeChanged = {},
                 onPanChanged = {},
                 onMuteToggled = {},

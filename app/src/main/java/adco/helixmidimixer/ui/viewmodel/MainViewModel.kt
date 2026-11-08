@@ -67,10 +67,10 @@ class MainViewModel(
         @Suppress("UNCHECKED_CAST")
         val routes = flows[6] as Map<OutputGroup, HomeRoute>
 
-        (0..10).map { chIndex ->
+        (0..14).map { chIndex ->
             val key = "${group.name}_$chIndex"
-            val customName = if (chIndex in 2..9) {
-                val songIdx = chIndex - 1 // 1..8
+            val customName = if (chIndex in 6..13) {
+                val songIdx = chIndex - 5 // 1..8
                 songNames[songIdx]
             } else null
 
@@ -109,25 +109,33 @@ class MainViewModel(
     fun updateVolume(channelIndex: Int, volume: Int) {
         val group = _selectedGroup.value
         val key = "${group.name}_$channelIndex"
-        val currentVols = _volumes.value.toMutableMap()
-        currentVols[key] = volume.coerceIn(0, 127)
-        _volumes.value = currentVols
+        val clampedVol = volume.coerceIn(0, 127)
+        val currentVols = _volumes.value
+        if (currentVols[key] != clampedVol) {
+            val mutableVols = currentVols.toMutableMap()
+            mutableVols[key] = clampedVol
+            _volumes.value = mutableVols
 
-        // Send BLE MIDI CC
-        val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).volumeCc
-        bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = volume)
+            // Send BLE MIDI CC
+            val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).volumeCc
+            bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = clampedVol)
+        }
     }
 
     fun updatePan(channelIndex: Int, pan: Int) {
         val group = _selectedGroup.value
         val key = "${group.name}_$channelIndex"
-        val currentPans = _pans.value.toMutableMap()
-        currentPans[key] = pan.coerceIn(0, 127)
-        _pans.value = currentPans
+        val clampedPan = pan.coerceIn(0, 127)
+        val currentPans = _pans.value
+        if (currentPans[key] != clampedPan) {
+            val mutablePans = currentPans.toMutableMap()
+            mutablePans[key] = clampedPan
+            _pans.value = mutablePans
 
-        // Send BLE MIDI CC
-        val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).panCc
-        bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = pan)
+            // Send BLE MIDI CC
+            val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).panCc
+            bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = clampedPan)
+        }
     }
 
     fun toggleMute(channelIndex: Int, isMuted: Boolean) {
@@ -135,7 +143,7 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveMuteState(group, channelIndex, isMuted)
         }
-        // Send BLE MIDI CC (0 for off, 127 for on)
+        // Send BLE MIDI CC (0 for off, 127 for on >= 64)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).muteCc
         bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = if (isMuted) 127 else 0)
     }
@@ -145,9 +153,20 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveSoloState(group, channelIndex, isSoloed)
         }
-        // Send BLE MIDI CC (0 for off, 127 for on)
+        // Send BLE MIDI CC (0 for off, 127 for on >= 64)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).soloCc
         bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = if (isSoloed) 127 else 0)
+    }
+
+    fun clearAllSolos() {
+        val group = _selectedGroup.value
+        viewModelScope.launch {
+            for (chIdx in 0..14) {
+                repository.saveSoloState(group, chIdx, false)
+            }
+        }
+        // Send Clear Solo CC (CC 94, value 127 >= 64)
+        bleMidiManager.sendControlChange(channel = 0, ccNumber = 94, value = 127)
     }
 
     fun updateHomeRoute(route: HomeRoute) {
@@ -189,28 +208,48 @@ class MainViewModel(
         val group = _selectedGroup.value
         val mapping = midiCcMapping.value
 
-        for (chIndex in 0..10) {
+        // Handle Clear Solo CC (CC 94)
+        if (ccNumber == 94 && value >= 64) {
+            viewModelScope.launch {
+                for (chIdx in 0..14) {
+                    repository.saveSoloState(group, chIdx, false)
+                }
+            }
+            return
+        }
+
+        for (chIndex in 0..14) {
             val chCc = mapping.getChannelCc(group, chIndex)
             val key = "${group.name}_$chIndex"
             when (ccNumber) {
                 chCc.volumeCc -> {
-                    val vols = _volumes.value.toMutableMap()
-                    vols[key] = value
-                    _volumes.value = vols
+                    val clampedValue = value.coerceIn(0, 127)
+                    val vols = _volumes.value
+                    if (vols[key] != clampedValue) {
+                        val mutableVols = vols.toMutableMap()
+                        mutableVols[key] = clampedValue
+                        _volumes.value = mutableVols
+                    }
                 }
                 chCc.panCc -> {
-                    val pns = _pans.value.toMutableMap()
-                    pns[key] = value
-                    _pans.value = pns
+                    val clampedValue = value.coerceIn(0, 127)
+                    val pns = _pans.value
+                    if (pns[key] != clampedValue) {
+                        val mutablePns = pns.toMutableMap()
+                        mutablePns[key] = clampedValue
+                        _pans.value = mutablePns
+                    }
                 }
                 chCc.muteCc -> {
+                    val shouldMute = value >= 64
                     viewModelScope.launch {
-                        repository.saveMuteState(group, chIndex, value >= 64)
+                        repository.saveMuteState(group, chIndex, shouldMute)
                     }
                 }
                 chCc.soloCc -> {
+                    val shouldSolo = value >= 64
                     viewModelScope.launch {
-                        repository.saveSoloState(group, chIndex, value >= 64)
+                        repository.saveSoloState(group, chIndex, shouldSolo)
                     }
                 }
             }

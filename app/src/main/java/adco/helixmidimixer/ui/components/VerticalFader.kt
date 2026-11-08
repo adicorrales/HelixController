@@ -75,27 +75,6 @@ fun VerticalFader(
         modifier = modifier.width(54.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // CC Overlay Badge (e.g. "CC 11")
-        Box(
-            modifier = Modifier
-                .clip(RoundedCornerShape(4.dp))
-                .background(HelixBadgeBg)
-                .border(0.5.dp, HelixCardBorder, RoundedCornerShape(4.dp))
-                .padding(horizontal = 4.dp, vertical = 2.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = "CC $volumeCc",
-                style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(
-                    fontSize = 9.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = HelixBadgeText
-                )
-            )
-        }
-
-        Spacer(modifier = Modifier.height(4.dp))
-
         // Volume dB Readout Text
         Text(
             text = dbText,
@@ -187,7 +166,7 @@ fun VerticalFader(
                     )
                 }
 
-                // 3. Draw Side Tick Marks (dB Scale markers: +6, 0, -6, -12, -24, -36, -inf)
+                // 3. Draw Side Tick Marks (dB Scale markers)
                 val tickPositions = listOf(
                     1.0f to "+6",
                     100f / 127f to "0",
@@ -200,14 +179,12 @@ fun VerticalFader(
 
                 tickPositions.forEach { (tickFrac, _) ->
                     val tickY = knobMargin + usableHeight * (1f - tickFrac)
-                    // Left tick mark
                     drawLine(
                         color = HelixCardBorder,
                         start = Offset(4.dp.toPx(), tickY),
                         end = Offset(trackLeft - 3.dp.toPx(), tickY),
                         strokeWidth = 1.dp.toPx()
                     )
-                    // Right tick mark
                     drawLine(
                         color = HelixCardBorder,
                         start = Offset(trackLeft + trackWidth + 3.dp.toPx(), tickY),
@@ -222,14 +199,12 @@ fun VerticalFader(
                 val knobLeft = centerX - knobWidth / 2f
                 val knobTop = knobCenterY - knobHeight / 2f
 
-                // Knob shadow & base
                 drawRoundRect(
                     color = Color(0xFF2A2E38),
                     topLeft = Offset(knobLeft, knobTop),
                     size = Size(knobWidth, knobHeight),
                     cornerRadius = CornerRadius(4.dp.toPx(), 4.dp.toPx())
                 )
-                // Metallic outer border
                 drawRoundRect(
                     color = Color(0xFF64748B),
                     topLeft = Offset(knobLeft, knobTop),
@@ -238,7 +213,6 @@ fun VerticalFader(
                     style = Stroke(width = 1.5.dp.toPx())
                 )
 
-                // Inner knob grip lines
                 val lineSpacing = 4.dp.toPx()
                 for (i in -1..1) {
                     val lineY = knobCenterY + i * lineSpacing
@@ -256,7 +230,6 @@ fun VerticalFader(
                     )
                 }
 
-                // Center LED Indicator Line on Knob
                 val indicatorColor = if (isMuted) Color(0xFFE53E3E) else accentColor
                 drawLine(
                     color = indicatorColor,

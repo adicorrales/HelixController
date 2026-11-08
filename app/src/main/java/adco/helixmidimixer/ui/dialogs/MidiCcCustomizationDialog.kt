@@ -19,7 +19,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Restore
 import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.AlertDialog
@@ -40,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -216,14 +214,14 @@ fun MidiCcCustomizationDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Grid list of 11 Channels
+                // Grid list of 15 Channels
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(280.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(11) { chIndex ->
+                    items(15) { chIndex ->
                         val config = ChannelConfig.getConfigForIndex(chIndex)
                         val chCc = mapping.getChannelCc(selectedGroupTab, chIndex)
 
@@ -499,8 +497,12 @@ private fun EditSingleCcDialog(
 private fun getChannelLabel(config: ChannelConfig): String {
     return when (config.index) {
         0 -> "0: Home"
-        1 -> "1: Song Master"
-        10 -> "10: BT Audio"
-        else -> "${config.index}: Song ${config.index - 1}"
+        1 -> "1: Route 1A"
+        2 -> "2: Route 1B"
+        3 -> "3: Route 2A"
+        4 -> "4: Route 2B"
+        5 -> "5: Song Master"
+        14 -> "14: BT Audio"
+        else -> "${config.index}: Song ${config.index - 5}"
     }
 }
