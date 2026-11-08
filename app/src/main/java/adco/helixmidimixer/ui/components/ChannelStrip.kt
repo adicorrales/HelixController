@@ -14,25 +14,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.ArrowDropDown
 import androidx.compose.material.icons.rounded.Audiotrack
 import androidx.compose.material.icons.rounded.Bluetooth
+import androidx.compose.material.icons.rounded.Cable
 import androidx.compose.material.icons.rounded.Edit
 import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.rounded.LibraryMusic
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +46,6 @@ import adco.helixmidimixer.data.model.ChannelType
 import adco.helixmidimixer.data.model.HomeRoute
 import adco.helixmidimixer.data.model.OutputGroup
 import adco.helixmidimixer.ui.theme.HelixBadgeBg
-import adco.helixmidimixer.ui.theme.HelixBadgeText
 import adco.helixmidimixer.ui.theme.HelixBlueBorder
 import adco.helixmidimixer.ui.theme.HelixBlueHeader
 import adco.helixmidimixer.ui.theme.HelixBluePrimary
@@ -88,6 +83,8 @@ fun ChannelStrip(
     onHomeRouteChanged: (HomeRoute) -> Unit,
     onOpenPanDialog: () -> Unit,
     onChannelRenameRequested: () -> Unit,
+    isRoutesExpanded: Boolean = false,
+    onToggleRoutesExpanded: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Determine category styling
@@ -135,21 +132,48 @@ fun ChannelStrip(
                     .background(headerBg),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = getChannelHeaderTag(channelState),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 11.sp,
-                        color = HelixTextPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = getChannelHeaderTag(channelState),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 11.sp,
+                            color = HelixTextPrimary
+                        ),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                    if (channelState.channelIndex == 0 && onToggleRoutesExpanded != null) {
+                        Box(
+                            modifier = Modifier
+                                .size(18.dp)
+                                .clip(CircleShape)
+                                .background(HelixBadgeBg)
+                                .clickable { onToggleRoutesExpanded(!isRoutesExpanded) },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = if (isRoutesExpanded) "-" else "+",
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 12.sp,
+                                    color = accentColor
+                                )
+                            )
+                        }
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 2. Pan / Balance Control Button Box (No CC badge per UI refinements requirement)
+            // 2. Pan / Balance Control Button Box
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -273,7 +297,11 @@ private fun BottomChannelArea(
         ChannelType.ROUTE -> Icons.Rounded.Home
         ChannelType.SONG_MASTER -> Icons.Rounded.LibraryMusic
         ChannelType.SONG_CHANNEL -> Icons.Rounded.Audiotrack
-        ChannelType.BT_AUDIO -> Icons.Rounded.Bluetooth
+        ChannelType.CLICK -> Icons.Rounded.Audiotrack
+        ChannelType.COUNT_IN -> Icons.Rounded.Audiotrack
+        ChannelType.USB_IN -> Icons.Rounded.Cable
+        ChannelType.BT_IN -> Icons.Rounded.Bluetooth
+        ChannelType.AUX_IN -> Icons.Rounded.Cable
     }
 
     Column(
@@ -294,20 +322,7 @@ private fun BottomChannelArea(
         Spacer(modifier = Modifier.height(2.dp))
 
         when (channelState.config.type) {
-            ChannelType.HOME -> {
-                Text(
-                    text = channelState.effectiveName,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HelixTextPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
-            }
-            ChannelType.ROUTE -> {
+            ChannelType.HOME, ChannelType.ROUTE, ChannelType.SONG_MASTER, ChannelType.CLICK, ChannelType.COUNT_IN, ChannelType.USB_IN, ChannelType.BT_IN, ChannelType.AUX_IN -> {
                 Text(
                     text = channelState.effectiveName,
                     style = MaterialTheme.typography.labelSmall.copy(
@@ -350,19 +365,6 @@ private fun BottomChannelArea(
                     )
                 }
             }
-            ChannelType.SONG_MASTER, ChannelType.BT_AUDIO -> {
-                Text(
-                    text = channelState.effectiveName,
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = HelixTextPrimary
-                    ),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    textAlign = TextAlign.Center
-                )
-            }
         }
     }
 }
@@ -372,8 +374,12 @@ private fun getChannelHeaderTag(channelState: ChannelState): String {
         ChannelType.HOME -> "HOME"
         ChannelType.ROUTE -> channelState.config.defaultName.uppercase()
         ChannelType.SONG_MASTER -> "MASTER"
-        ChannelType.SONG_CHANNEL -> "SONG ${channelState.channelIndex - 5}"
-        ChannelType.BT_AUDIO -> "BT AUDIO"
+        ChannelType.SONG_CHANNEL -> "CH ${channelState.channelIndex - 5}"
+        ChannelType.CLICK -> "CLICK"
+        ChannelType.COUNT_IN -> "COUNT IN"
+        ChannelType.USB_IN -> "USB IN"
+        ChannelType.BT_IN -> "BT IN"
+        ChannelType.AUX_IN -> "AUX IN"
     }
 }
 

@@ -35,6 +35,12 @@ class MainViewModel(
     val midiCcMapping: StateFlow<MidiCcMapping> = repository.getMidiCcMapping()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MidiCcMapping())
 
+    val matrixMidiChannels: StateFlow<Map<OutputGroup, Int>> = repository.getMatrixMidiChannels()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val routesExpanded: StateFlow<Map<OutputGroup, Boolean>> = repository.getRoutesExpanded()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     val bleConnectionState: StateFlow<BleConnectionState> = bleMidiManager.connectionState
     val scannedDevices: StateFlow<List<BleDeviceInfo>> = bleMidiManager.scannedDevices
 
@@ -50,7 +56,8 @@ class MainViewModel(
         songChannelNames,
         muteStates,
         soloStates,
-        homeRoutes
+        homeRoutes,
+        routesExpanded
     ) { flows ->
         @Suppress("UNCHECKED_CAST")
         val group = flows[0] as OutputGroup
@@ -66,8 +73,17 @@ class MainViewModel(
         val solos = flows[5] as Map<String, Boolean>
         @Suppress("UNCHECKED_CAST")
         val routes = flows[6] as Map<OutputGroup, HomeRoute>
+        @Suppress("UNCHECKED_CAST")
+        val expandedMap = flows[7] as Map<OutputGroup, Boolean>
 
-        (0..14).map { chIndex ->
+        val isExpanded = expandedMap[group] ?: false
+
+        (0..18).mapNotNull { chIndex ->
+            // If routes are collapsed, hide route channels (indices 1, 2, 3, 4: Path 1A, 1B, 2A, 2B)
+            if (!isExpanded && chIndex in 1..4) {
+                return@mapNotNull null
+            }
+
             val key = "${group.name}_$chIndex"
             val customName = if (chIndex in 6..13) {
                 val songIdx = chIndex - 5 // 1..8
@@ -102,6 +118,16 @@ class MainViewModel(
         }
     }
 
+    private fun getMidiChannelForGroup(group: OutputGroup): Int {
+        val defaultCh = when (group) {
+            OutputGroup.OUTPUT_1_4 -> 3
+            OutputGroup.XLR -> 4
+            OutputGroup.PHONES -> 5
+        }
+        val channel1Based = matrixMidiChannels.value[group] ?: defaultCh
+        return (channel1Based - 1).coerceIn(0, 15)
+    }
+
     fun selectOutputGroup(group: OutputGroup) {
         _selectedGroup.value = group
     }
@@ -118,7 +144,8 @@ class MainViewModel(
 
             // Send BLE MIDI CC
             val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).volumeCc
-            bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = clampedVol)
+            val midiCh = getMidiChannelForGroup(group)
+            bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = clampedVol)
         }
     }
 
@@ -134,7 +161,8 @@ class MainViewModel(
 
             // Send BLE MIDI CC
             val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).panCc
-            bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = clampedPan)
+            val midiCh = getMidiChannelForGroup(group)
+            bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = clampedPan)
         }
     }
 
@@ -145,7 +173,8 @@ class MainViewModel(
         }
         // Send BLE MIDI CC (0 for off, 127 for on >= 64)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).muteCc
-        bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = if (isMuted) 127 else 0)
+        val midiCh = getMidiChannelForGroup(group)
+        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = if (isMuted) 127 else 0)
     }
 
     fun toggleSolo(channelIndex: Int, isSoloed: Boolean) {
@@ -155,18 +184,20 @@ class MainViewModel(
         }
         // Send BLE MIDI CC (0 for off, 127 for on >= 64)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).soloCc
-        bleMidiManager.sendControlChange(channel = 0, ccNumber = ccNum, value = if (isSoloed) 127 else 0)
+        val midiCh = getMidiChannelForGroup(group)
+        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = if (isSoloed) 127 else 0)
     }
 
     fun clearAllSolos() {
         val group = _selectedGroup.value
         viewModelScope.launch {
-            for (chIdx in 0..14) {
+            for (chIdx in 0..18) {
                 repository.saveSoloState(group, chIdx, false)
             }
         }
         // Send Clear Solo CC (CC 94, value 127 >= 64)
-        bleMidiManager.sendControlChange(channel = 0, ccNumber = 94, value = 127)
+        val midiCh = getMidiChannelForGroup(group)
+        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = 94, value = 127)
     }
 
     fun updateHomeRoute(route: HomeRoute) {
@@ -185,6 +216,18 @@ class MainViewModel(
     fun updateMidiCcMapping(mapping: MidiCcMapping) {
         viewModelScope.launch {
             repository.saveMidiCcMapping(mapping)
+        }
+    }
+
+    fun saveMatrixMidiChannel(group: OutputGroup, channel: Int) {
+        viewModelScope.launch {
+            repository.saveMatrixMidiChannel(group, channel)
+        }
+    }
+
+    fun toggleRoutesExpanded(group: OutputGroup, expanded: Boolean) {
+        viewModelScope.launch {
+            repository.saveRoutesExpanded(group, expanded)
         }
     }
 
@@ -211,14 +254,14 @@ class MainViewModel(
         // Handle Clear Solo CC (CC 94)
         if (ccNumber == 94 && value >= 64) {
             viewModelScope.launch {
-                for (chIdx in 0..14) {
+                for (chIdx in 0..18) {
                     repository.saveSoloState(group, chIdx, false)
                 }
             }
             return
         }
 
-        for (chIndex in 0..14) {
+        for (chIndex in 0..18) {
             val chCc = mapping.getChannelCc(group, chIndex)
             val key = "${group.name}_$chIndex"
             when (ccNumber) {

@@ -3,6 +3,7 @@ package adco.helixmidimixer.ui.components
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.layout.Box
@@ -85,7 +86,7 @@ fun VerticalFader(
             )
         )
 
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(2.dp))
 
         // Fader Canvas Track & Knob Container
         Box(
@@ -100,7 +101,7 @@ fun VerticalFader(
                 .pointerInput(Unit) {
                     detectTapGestures { offset ->
                         if (componentHeightPx > 0) {
-                            val knobMargin = 20.dp.toPx()
+                            val knobMargin = 16.dp.toPx()
                             val usableHeight = (componentHeightPx - 2 * knobMargin).coerceAtLeast(1f)
                             val clampedY = (offset.y - knobMargin).coerceIn(0f, usableHeight)
                             val fraction = 1f - (clampedY / usableHeight)
@@ -113,7 +114,7 @@ fun VerticalFader(
                     detectVerticalDragGestures { change, _ ->
                         change.consume()
                         if (componentHeightPx > 0) {
-                            val knobMargin = 20.dp.toPx()
+                            val knobMargin = 16.dp.toPx()
                             val usableHeight = (componentHeightPx - 2 * knobMargin).coerceAtLeast(1f)
                             val clampedY = (change.position.y - knobMargin).coerceIn(0f, usableHeight)
                             val fraction = 1f - (clampedY / usableHeight)
@@ -126,7 +127,7 @@ fun VerticalFader(
             Canvas(modifier = Modifier.fillMaxSize()) {
                 val width = size.width
                 val height = size.height
-                val knobMargin = 20.dp.toPx()
+                val knobMargin = 16.dp.toPx()
                 val usableHeight = (height - 2 * knobMargin).coerceAtLeast(1f)
 
                 val centerX = width / 2f
@@ -195,7 +196,7 @@ fun VerticalFader(
 
                 // 4. Draw Line 6 Helix Metallic Fader Knob
                 val knobWidth = 42.dp.toPx()
-                val knobHeight = 24.dp.toPx()
+                val knobHeight = 22.dp.toPx()
                 val knobLeft = centerX - knobWidth / 2f
                 val knobTop = knobCenterY - knobHeight / 2f
 
@@ -213,7 +214,7 @@ fun VerticalFader(
                     style = Stroke(width = 1.5.dp.toPx())
                 )
 
-                val lineSpacing = 4.dp.toPx()
+                val lineSpacing = 3.dp.toPx()
                 for (i in -1..1) {
                     val lineY = knobCenterY + i * lineSpacing
                     drawLine(
@@ -250,6 +251,28 @@ fun VerticalFader(
                 color = HelixTextSecondary
             )
         )
+
+        Spacer(modifier = Modifier.height(2.dp))
+
+        // Reset Volume to 100 Button
+        Box(
+            modifier = Modifier
+                .clip(RoundedCornerShape(4.dp))
+                .background(HelixBadgeBg)
+                .border(0.5.dp, HelixCardBorder, RoundedCornerShape(4.dp))
+                .clickable { onValueChange(100) }
+                .padding(horizontal = 6.dp, vertical = 2.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "100",
+                style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(
+                    fontSize = 9.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = accentColor
+                )
+            )
+        }
     }
 }
 

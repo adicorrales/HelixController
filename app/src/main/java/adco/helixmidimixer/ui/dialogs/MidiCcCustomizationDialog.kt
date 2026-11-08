@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -71,8 +72,10 @@ private enum class CcType { VOLUME, PAN, MUTE, SOLO }
 @Composable
 fun MidiCcCustomizationDialog(
     initialMapping: MidiCcMapping,
+    matrixMidiChannels: Map<OutputGroup, Int>,
     currentGroup: OutputGroup,
     onSaveMapping: (MidiCcMapping) -> Unit,
+    onSaveMatrixMidiChannel: (OutputGroup, Int) -> Unit,
     onDismiss: () -> Unit
 ) {
     var mapping by remember { mutableStateOf(initialMapping) }
@@ -154,7 +157,68 @@ fun MidiCcCustomizationDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(12.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Matrix MIDI Channel Selector for selected group
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(HelixBadgeBg)
+                        .border(1.dp, HelixCardBorder, RoundedCornerShape(6.dp))
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Matrix MIDI Channel (${selectedGroupTab.displayName}):",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = HelixTextPrimary
+                        )
+                    )
+                    val defaultCh = when (selectedGroupTab) {
+                        OutputGroup.OUTPUT_1_4 -> 3
+                        OutputGroup.XLR -> 4
+                        OutputGroup.PHONES -> 5
+                    }
+                    val currentCh = matrixMidiChannels[selectedGroupTab] ?: defaultCh
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedButton(
+                            onClick = {
+                                if (currentCh > 1) {
+                                    onSaveMatrixMidiChannel(selectedGroupTab, currentCh - 1)
+                                }
+                            },
+                            modifier = Modifier.size(32.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("-", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Ch $currentCh",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = HelixGreenPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                if (currentCh < 16) {
+                                    onSaveMatrixMidiChannel(selectedGroupTab, currentCh + 1)
+                                }
+                            },
+                            modifier = Modifier.size(32.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("+", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 // Matrix Header Row
                 Row(
@@ -214,14 +278,14 @@ fun MidiCcCustomizationDialog(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                // Grid list of 15 Channels
+                // Grid list of 19 Channels (0..18)
                 LazyColumn(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(280.dp),
+                        .height(260.dp),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    items(15) { chIndex ->
+                    items(19) { chIndex ->
                         val config = ChannelConfig.getConfigForIndex(chIndex)
                         val chCc = mapping.getChannelCc(selectedGroupTab, chIndex)
 
@@ -497,12 +561,17 @@ private fun EditSingleCcDialog(
 private fun getChannelLabel(config: ChannelConfig): String {
     return when (config.index) {
         0 -> "0: Home"
-        1 -> "1: Route 1A"
-        2 -> "2: Route 1B"
-        3 -> "3: Route 2A"
-        4 -> "4: Route 2B"
+        1 -> "1: Path 1A"
+        2 -> "2: Path 1B"
+        3 -> "3: Path 2A"
+        4 -> "4: Path 2B"
         5 -> "5: Song Master"
-        14 -> "14: BT Audio"
-        else -> "${config.index}: Song ${config.index - 5}"
+        in 6..13 -> "${config.index}: CH ${config.index - 5}"
+        14 -> "14: Click"
+        15 -> "15: Count In"
+        16 -> "16: USB In 1/2"
+        17 -> "17: Bluetooth In"
+        18 -> "18: Aux In"
+        else -> "${config.index}: ${config.defaultName}"
     }
 }

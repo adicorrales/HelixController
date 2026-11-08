@@ -2,7 +2,6 @@ package adco.helixmidimixer.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -32,6 +31,8 @@ fun HelixStadiumMixerScreen(
     val selectedGroup by viewModel.selectedGroup.collectAsStateWithLifecycle()
     val channelStates by viewModel.channelStates.collectAsStateWithLifecycle()
     val midiCcMapping by viewModel.midiCcMapping.collectAsStateWithLifecycle()
+    val matrixMidiChannels by viewModel.matrixMidiChannels.collectAsStateWithLifecycle()
+    val routesExpanded by viewModel.routesExpanded.collectAsStateWithLifecycle()
     val bleConnectionState by viewModel.bleConnectionState.collectAsStateWithLifecycle()
     val scannedDevices by viewModel.scannedDevices.collectAsStateWithLifecycle()
 
@@ -65,13 +66,15 @@ fun HelixStadiumMixerScreen(
                 channelStates = channelStates,
                 midiCcMapping = midiCcMapping,
                 selectedGroup = selectedGroup,
+                routesExpanded = routesExpanded,
                 onVolumeChanged = { chIdx, newVol -> viewModel.updateVolume(chIdx, newVol) },
                 onPanChanged = { chIdx, newPan -> viewModel.updatePan(chIdx, newPan) },
                 onMuteToggled = { chIdx, isMuted -> viewModel.toggleMute(chIdx, isMuted) },
                 onSoloToggled = { chIdx, isSoloed -> viewModel.toggleSolo(chIdx, isSoloed) },
                 onHomeRouteChanged = { newRoute -> viewModel.updateHomeRoute(newRoute) },
                 onOpenPanDialog = { chIdx -> panChannelTarget = chIdx },
-                onChannelRenameRequested = { songIdx -> renameSongTarget = songIdx }
+                onChannelRenameRequested = { songIdx -> renameSongTarget = songIdx },
+                onToggleRoutesExpanded = { group, expanded -> viewModel.toggleRoutesExpanded(group, expanded) }
             )
         }
     }
@@ -93,15 +96,17 @@ fun HelixStadiumMixerScreen(
     if (showCcDialog) {
         MidiCcCustomizationDialog(
             initialMapping = midiCcMapping,
+            matrixMidiChannels = matrixMidiChannels,
             currentGroup = selectedGroup,
             onSaveMapping = { newMapping -> viewModel.updateMidiCcMapping(newMapping) },
+            onSaveMatrixMidiChannel = { group, ch -> viewModel.saveMatrixMidiChannel(group, ch) },
             onDismiss = { showCcDialog = false }
         )
     }
 
     // 3. Pan Adjustment Dialog
     panChannelTarget?.let { chIdx ->
-        val chState = channelStates.find { it.channelIndex == chIdx }
+        val chState = channelStates.find { channelState -> channelState.channelIndex == chIdx }
         val panCc = midiCcMapping.getChannelCc(selectedGroup, chIdx).panCc
         if (chState != null) {
             PanAdjustmentDialog(
@@ -116,9 +121,9 @@ fun HelixStadiumMixerScreen(
 
     // 4. Edit Song Channel Name Dialog
     renameSongTarget?.let { songIdx ->
-        val chIdx = songIdx + 1 // 1..8 -> channel 2..9
-        val chState = channelStates.find { it.channelIndex == chIdx }
-        val currentName = chState?.customName ?: "Song $songIdx"
+        val chIdx = songIdx + 5 // song 1..8 -> channel 6..13
+        val chState = channelStates.find { channelState -> channelState.channelIndex == chIdx }
+        val currentName = chState?.customName ?: "CH $songIdx"
         EditChannelNameDialog(
             songIndex = songIdx,
             currentName = currentName,

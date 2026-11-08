@@ -44,7 +44,7 @@ Funcionalidades clave:
 - **Persistence**: Jetpack DataStore (Preferences DataStore for channel names, states, and MIDI CC maps)
 
 ## Implementation Steps
-**Total Duration:** 41m 1s
+**Total Duration:** 45m 51s
 
 ### Task_1_Core_Models_DataStore_And_MidiEngine: Setup data models for 3 Output Groups, 11 Channels per group, channel color coding, MIDI CC mappings, DataStore repository for state persistence (channel names, Mute/Solo, CC maps), and BLE MIDI manager for CME WIDI Master connectivity.
 - **Status:** COMPLETED
@@ -58,7 +58,7 @@ Funcionalidades clave:
 
 ### Task_2_Helix_Stadium_Mixer_UI_And_Channel_Strips: Develop the Line 6 Helix Stadium Matrix dark styled Compose UI including Top Bar output group selector (1/4 Outputs, XLR Outputs, Phones Outputs), Bluetooth MIDI connection button, 11 vertical channel strips (Pan slider/popup, Mute & Solo buttons, Volume slider, Channel name/icon), color coding (Home: light green, Song: light silver, BT: light blue), and MIDI CC customization dialog.
 - **Status:** COMPLETED
-- **Updates:** Implemented Line 6 Helix Stadium Matrix UI theme, MatrixTopBar with Output Group selector & BLE MIDI status button, 11 vertical channel strips with volume faders, Pan popup dialog, Mute & Solo buttons, 4-route selector, editable channel names, BluetoothMidiDialog, and MidiCcCustomizationDialog. Gradle build and unit tests passed.
+- **Updates:** Implemented Line 6 Helix Stadium Matrix theme, MatrixTopBar with Output Group selector & BLE MIDI status button, 11 vertical channel strips with volume faders, Pan popup dialog, Mute & Solo buttons, 4-route selector, editable channel names, BluetoothMidiDialog, and MidiCcCustomizationDialog. Gradle build and unit tests passed.
 - **Acceptance Criteria:**
   - Top bar with Output Group selector and BLE MIDI status button rendered
   - 11 channel strips rendered with dark Helix Matrix UI design and proper color highlights
@@ -108,4 +108,27 @@ Funcionalidades clave:
   - build pass
   - app does not crash
 - **Duration:** 2m 23s
+
+### Task_7_Matrix_Channels_Collapsible_Routes_Song_CH_Reset_And_Full_CC_Alignment: Implement Matrix layer MIDI channel settings (1/4" = Ch 3, XLR = Ch 4, Phones = Ch 5), collapsible Route Channels (Path 1A, 1B, 2A, 2B) with +/- circle button on Home channel (hidden by default, persisted in DataStore), rename Song channels to 'CH 1' ... 'CH 8', add 'Reset to 100' button below volume sliders, fix system status bar appearance for dark theme (WindowInsetsControllerCompat), and align full MIDI CC mapping table with Line 6 Helix Stadium specs (Home All Paths through Track 1-8, Click, Count In, USB In, BT In, Aux In).
+- **Status:** COMPLETED
+- **Updates:** Implemented Matrix layer MIDI channel settings (1/4"=Ch3, XLR=Ch4, Phones=Ch5), collapsible Route Channels (Path 1A,1B,2A,2B) with +/- toggle button on Home channel (hidden by default, persisted in DataStore), renamed Song headers to CH 1..CH 8, added '100' volume reset button, configured WindowInsetsControllerCompat for dark theme status bar, and aligned exact Line 6 Helix Stadium MIDI CC table. Gradle build and unit tests passed.
+- **Acceptance Criteria:**
+  - Matrix layer MIDI channels configurable and defaulting to 1/4" = Ch 3, XLR = Ch 4, Phones = Ch 5
+  - Collapsible Route Channels (1A, 1B, 2A, 2B) hidden by default with +/- circle toggle on Home channel and DataStore persistence
+  - Song channel headers renamed to 'CH 1' ... 'CH 8'
+  - 'Reset to 100' button added below each volume slider
+  - System status bar appearance configured for dark theme
+  - Full MIDI CC mapping table aligned with Line 6 Helix Stadium specs
+  - build pass
+- **Duration:** 4m
+
+### Task_8_Run_And_Verify_Updates: Build, run, and verify the updated Helix Midi Mixer application. Instruct critic_agent to verify application stability (no crashes), confirm alignment with user requirements (Matrix layer MIDI channels, collapsible routes, CH 1-8 naming, Reset to 100 button, dark theme status bar, full Line 6 Helix Stadium CC table), and report critical UI issues.
+- **Status:** COMPLETED
+- **Updates:** Critic agent verified all new updates on emulator successfully: Matrix layer MIDI channels (Ch 3, 4, 5 defaults), collapsible Route channels hidden by default with +/− toggle button and DataStore persistence, CH 1..CH 8 headers, '100' volume reset button, dark theme status bar styling, and full Line 6 Helix Stadium MIDI CC table alignment. App is stable with zero crashes.
+- **Acceptance Criteria:**
+  - make sure all existing tests pass
+  - build pass
+  - app does not crash
+  - All new feature updates verified: Matrix MIDI channels, collapsible route channels, CH 1-8 channel naming, Reset to 100 button, dark status bar, and Line 6 Helix Stadium MIDI CC table alignment
+- **Duration:** 50s
 

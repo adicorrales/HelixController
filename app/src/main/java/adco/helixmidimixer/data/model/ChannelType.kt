@@ -5,5 +5,9 @@ enum class ChannelType {
     ROUTE,
     SONG_MASTER,
     SONG_CHANNEL,
-    BT_AUDIO
+    CLICK,
+    COUNT_IN,
+    USB_IN,
+    BT_IN,
+    AUX_IN
 }

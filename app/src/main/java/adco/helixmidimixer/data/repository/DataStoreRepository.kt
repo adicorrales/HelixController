@@ -5,6 +5,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import adco.helixmidimixer.data.model.HomeRoute
@@ -40,6 +41,51 @@ class DataStoreRepository(
 
         fun homeRouteKey(group: OutputGroup): Preferences.Key<String> =
             stringPreferencesKey("home_route_${group.name}")
+
+        fun matrixMidiChannelKey(group: OutputGroup): Preferences.Key<Int> =
+            intPreferencesKey("matrix_midi_ch_${group.name}")
+
+        fun routesExpandedKey(group: OutputGroup): Preferences.Key<Boolean> =
+            booleanPreferencesKey("routes_expanded_${group.name}")
+    }
+
+    // --- Matrix MIDI Channels ---
+    fun getMatrixMidiChannels(): Flow<Map<OutputGroup, Int>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<OutputGroup, Int>()
+            for (group in OutputGroup.entries) {
+                val defaultCh = when (group) {
+                    OutputGroup.OUTPUT_1_4 -> 3
+                    OutputGroup.XLR -> 4
+                    OutputGroup.PHONES -> 5
+                }
+                map[group] = prefs[matrixMidiChannelKey(group)] ?: defaultCh
+            }
+            map
+        }
+    }
+
+    suspend fun saveMatrixMidiChannel(group: OutputGroup, channel: Int) {
+        dataStore.edit { prefs ->
+            prefs[matrixMidiChannelKey(group)] = channel.coerceIn(1, 16)
+        }
+    }
+
+    // --- Routes Expanded State ---
+    fun getRoutesExpanded(): Flow<Map<OutputGroup, Boolean>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<OutputGroup, Boolean>()
+            for (group in OutputGroup.entries) {
+                map[group] = prefs[routesExpandedKey(group)] ?: false // hidden by default on startup
+            }
+            map
+        }
+    }
+
+    suspend fun saveRoutesExpanded(group: OutputGroup, expanded: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[routesExpandedKey(group)] = expanded
+        }
     }
 
     // --- Song Channel Names ---

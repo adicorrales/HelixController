@@ -28,6 +28,7 @@ fun ChannelStripsRow(
     channelStates: List<ChannelState>,
     midiCcMapping: MidiCcMapping,
     selectedGroup: OutputGroup,
+    routesExpanded: Map<OutputGroup, Boolean>,
     onVolumeChanged: (channelIndex: Int, newVolume: Int) -> Unit,
     onPanChanged: (channelIndex: Int, newPan: Int) -> Unit,
     onMuteToggled: (channelIndex: Int, isMuted: Boolean) -> Unit,
@@ -35,13 +36,14 @@ fun ChannelStripsRow(
     onHomeRouteChanged: (newRoute: HomeRoute) -> Unit,
     onOpenPanDialog: (channelIndex: Int) -> Unit,
     onChannelRenameRequested: (songIndex: Int) -> Unit,
+    onToggleRoutesExpanded: (OutputGroup, Boolean) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isExpanded = routesExpanded[selectedGroup] ?: false
 
     if (isLandscape) {
-        // Landscape Mode: expand and fill available screen width horizontally using proportional weighting / SpaceEvenly / fillMaxWidth
         Row(
             modifier = modifier
                 .fillMaxWidth()
@@ -65,11 +67,15 @@ fun ChannelStripsRow(
                     onHomeRouteChanged = onHomeRouteChanged,
                     onOpenPanDialog = { onOpenPanDialog(chState.channelIndex) },
                     onChannelRenameRequested = {
-                        val songIdx = chState.channelIndex - 1 // 1..8
+                        val songIdx = chState.channelIndex - 5 // 1..8
                         if (songIdx in 1..8) {
                             onChannelRenameRequested(songIdx)
                         }
                     },
+                    isRoutesExpanded = isExpanded,
+                    onToggleRoutesExpanded = if (chState.channelIndex == 0) {
+                        { expanded -> onToggleRoutesExpanded(selectedGroup, expanded) }
+                    } else null,
                     modifier = Modifier
                         .fillMaxHeight()
                         .weight(1f)
@@ -78,9 +84,9 @@ fun ChannelStripsRow(
             }
         }
     } else {
-        // Portrait Mode: Half-Screen Split Layout (Two equal vertical halves for Tier 1 and Tier 2)
-        val firstTier = channelStates.take(8)
-        val secondTier = channelStates.drop(8)
+        val splitIndex = (channelStates.size + 1) / 2
+        val firstTier = channelStates.take(splitIndex)
+        val secondTier = channelStates.drop(splitIndex)
 
         val topScrollState = rememberScrollState()
         val bottomScrollState = rememberScrollState()
@@ -92,7 +98,6 @@ fun ChannelStripsRow(
                 .padding(6.dp),
             verticalArrangement = Arrangement.spacedBy(6.dp)
         ) {
-            // Top Half (Tier 1)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -120,18 +125,21 @@ fun ChannelStripsRow(
                             onHomeRouteChanged = onHomeRouteChanged,
                             onOpenPanDialog = { onOpenPanDialog(chState.channelIndex) },
                             onChannelRenameRequested = {
-                                val songIdx = chState.channelIndex - 1 // 1..8
+                                val songIdx = chState.channelIndex - 5 // 1..8
                                 if (songIdx in 1..8) {
                                     onChannelRenameRequested(songIdx)
                                 }
                             },
+                            isRoutesExpanded = isExpanded,
+                            onToggleRoutesExpanded = if (chState.channelIndex == 0) {
+                                { expanded -> onToggleRoutesExpanded(selectedGroup, expanded) }
+                            } else null,
                             modifier = Modifier.width(82.dp)
                         )
                     }
                 }
             }
 
-            // Bottom Half (Tier 2)
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -159,11 +167,15 @@ fun ChannelStripsRow(
                             onHomeRouteChanged = onHomeRouteChanged,
                             onOpenPanDialog = { onOpenPanDialog(chState.channelIndex) },
                             onChannelRenameRequested = {
-                                val songIdx = chState.channelIndex - 1 // 1..8
+                                val songIdx = chState.channelIndex - 5 // 1..8
                                 if (songIdx in 1..8) {
                                     onChannelRenameRequested(songIdx)
                                 }
                             },
+                            isRoutesExpanded = isExpanded,
+                            onToggleRoutesExpanded = if (chState.channelIndex == 0) {
+                                { expanded -> onToggleRoutesExpanded(selectedGroup, expanded) }
+                            } else null,
                             modifier = Modifier.width(82.dp)
                         )
                     }

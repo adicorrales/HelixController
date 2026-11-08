@@ -22,33 +22,19 @@ class MidiCcMappingTest {
         assertEquals(57, g1Ch0.muteCc)
         assertEquals(80, g1Ch0.soloCc)
 
-        // Test Output Group 1 (1/4") Channel 1 (Route 1A)
+        // Test Output Group 1 (1/4") Channel 1 (Path 1A)
         val g1Ch1 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 1)
         assertEquals(12, g1Ch1.volumeCc)
         assertEquals(35, g1Ch1.panCc)
         assertEquals(58, g1Ch1.muteCc)
         assertEquals(81, g1Ch1.soloCc)
 
-        // Test Output Group 1 (1/4") Channel 14 (BT Audio)
-        val g1Ch14 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 14)
-        assertEquals(28, g1Ch14.volumeCc)
-        assertEquals(51, g1Ch14.panCc)
-        assertEquals(74, g1Ch14.muteCc)
-        assertEquals(97, g1Ch14.soloCc)
-
-        // Test Output Group 2 (XLR) Channel 0 (Home) - index offset 15
-        val g2Ch0 = mapping.getChannelCc(OutputGroup.XLR, 0)
-        assertEquals(26, g2Ch0.volumeCc)
-        assertEquals(49, g2Ch0.panCc)
-        assertEquals(72, g2Ch0.muteCc)
-        assertEquals(95, g2Ch0.soloCc)
-
-        // Test Output Group 2 (XLR) Channel 7 - index offset 15
-        val g2Ch7 = mapping.getChannelCc(OutputGroup.XLR, 7)
-        assertEquals(11 + 7 + 15, g2Ch7.volumeCc)
-        assertEquals(34 + 7 + 15, g2Ch7.panCc)
-        assertEquals(57 + 7 + 15, g2Ch7.muteCc)
-        assertEquals(80 + 7 + 15, g2Ch7.soloCc)
+        // Test Output Group 1 (1/4") Channel 18 (Aux In)
+        val g1Ch18 = mapping.getChannelCc(OutputGroup.OUTPUT_1_4, 18)
+        assertEquals(29, g1Ch18.volumeCc)
+        assertEquals(52, g1Ch18.panCc)
+        assertEquals(75, g1Ch18.muteCc)
+        assertEquals(98, g1Ch18.soloCc)
     }
 
     @Test
