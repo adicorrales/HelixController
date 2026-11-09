@@ -155,18 +155,21 @@ class MainViewModel(
         }
     }
 
-    private fun getMidiChannelForGroup(group: OutputGroup): Int {
+    fun getActiveMatrixMidiChannel(group: OutputGroup = _selectedGroup.value): Int {
         val defaultCh = when (group) {
             OutputGroup.OUTPUT_1_4 -> 3
             OutputGroup.XLR -> 4
             OutputGroup.PHONES -> 5
         }
-        val channel1Based = matrixMidiChannels.value[group] ?: defaultCh
-        return (channel1Based - 1).coerceIn(0, 15)
+        return matrixMidiChannels.value[group] ?: defaultCh
     }
 
     fun selectOutputGroup(group: OutputGroup) {
         _selectedGroup.value = group
+    }
+
+    fun onVolumeChange(channelIndex: Int, volume: Int) {
+        updateVolume(channelIndex, volume)
     }
 
     fun updateVolume(channelIndex: Int, volume: Int) {
@@ -180,10 +183,18 @@ class MainViewModel(
             _volumes.value = mutableVols
 
             // Send BLE MIDI CC
-            val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).volumeCc
-            val midiCh = getMidiChannelForGroup(group)
-            bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = clampedVol)
+            val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
+            val midiCh = getActiveMatrixMidiChannel(group)
+            bleMidiManager.sendControlChange(
+                channel = midiCh,
+                ccNumber = channelCcMapping.volumeCc,
+                value = clampedVol
+            )
         }
+    }
+
+    fun onPanChange(channelIndex: Int, pan: Int) {
+        updatePan(channelIndex, pan)
     }
 
     fun updatePan(channelIndex: Int, pan: Int) {
@@ -197,9 +208,13 @@ class MainViewModel(
             _pans.value = mutablePans
 
             // Send BLE MIDI CC
-            val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).panCc
-            val midiCh = getMidiChannelForGroup(group)
-            bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = clampedPan)
+            val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
+            val midiCh = getActiveMatrixMidiChannel(group)
+            bleMidiManager.sendControlChange(
+                channel = midiCh,
+                ccNumber = channelCcMapping.panCc,
+                value = clampedPan
+            )
         }
     }
 
@@ -209,9 +224,13 @@ class MainViewModel(
             repository.saveMuteState(group, channelIndex, isMuted)
         }
         // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
-        val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).muteCc
-        val midiCh = getMidiChannelForGroup(group)
-        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = 127)
+        val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
+        val midiCh = getActiveMatrixMidiChannel(group)
+        bleMidiManager.sendControlChange(
+            channel = midiCh,
+            ccNumber = channelCcMapping.muteCc,
+            value = 127
+        )
     }
 
     fun toggleSolo(channelIndex: Int, isSoloed: Boolean) {
@@ -220,9 +239,13 @@ class MainViewModel(
             repository.saveSoloState(group, channelIndex, isSoloed)
         }
         // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
-        val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).soloCc
-        val midiCh = getMidiChannelForGroup(group)
-        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = 127)
+        val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
+        val midiCh = getActiveMatrixMidiChannel(group)
+        bleMidiManager.sendControlChange(
+            channel = midiCh,
+            ccNumber = channelCcMapping.soloCc,
+            value = 127
+        )
     }
 
     fun toggleChannelVisibility(channelIndex: Int, isVisible: Boolean) {
@@ -240,7 +263,7 @@ class MainViewModel(
             }
         }
         // Send Clear Solo CC (CC 94, value 127 >= 64)
-        val midiCh = getMidiChannelForGroup(group)
+        val midiCh = getActiveMatrixMidiChannel(group)
         bleMidiManager.sendControlChange(channel = midiCh, ccNumber = 94, value = 127)
     }
 

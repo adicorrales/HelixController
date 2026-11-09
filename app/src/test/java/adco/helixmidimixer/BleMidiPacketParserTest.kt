@@ -9,20 +9,24 @@ class BleMidiPacketParserTest {
 
     @Test
     fun testCreateCcPacketFormat() {
-        val channel = 0 // Channel 1 (0-indexed)
+        val channel = 1 // Channel 1 (1-based)
         val ccNumber = 11 // Volume CC
         val value = 127
 
         val packet = BleMidiPacketParser.createCcPacket(channel, ccNumber, value, timestampMs = 1000)
 
-        // Raw MIDI CC packet is 3 bytes (status, cc, value) without 0x80 header bytes
-        assertEquals(3, packet.size)
-        // Status byte for CC channel 0 is 0xB0
-        assertEquals(0xB0.toByte(), packet[0])
+        // BLE-MIDI CC packet is 5 bytes (header, timestamp, status, cc, value)
+        assertEquals(5, packet.size)
+        // Header byte (0x80 | (timestamp >> 7) & 0x3F) for 1000 ms is 0x87
+        assertEquals(0x87.toByte(), packet[0])
+        // Timestamp byte (0x80 | timestamp & 0x7F) for 1000 ms is 0xE8
+        assertEquals(0xE8.toByte(), packet[1])
+        // Status byte for CC channel 1 (0-based 0) is 0xB0
+        assertEquals(0xB0.toByte(), packet[2])
         // CC Number
-        assertEquals(11.toByte(), packet[1])
+        assertEquals(11.toByte(), packet[3])
         // CC Value
-        assertEquals(127.toByte(), packet[2])
+        assertEquals(127.toByte(), packet[4])
     }
 
     @Test
@@ -67,5 +71,30 @@ class BleMidiPacketParserTest {
     fun testParseShortOrEmptyBytes() {
         val emptyList = BleMidiPacketParser.parse(byteArrayOf(0x80.toByte()))
         assertTrue(emptyList.isEmpty())
+    }
+
+    @Test
+    fun testOutputGroupDefaultMidiChannelsAndStatusBytes() {
+        // OUTPUT_1_4 default = 3 (1-based), status 0xB2 (0-based 2)
+        val packet1_4 = BleMidiPacketParser.createCcPacket(channel = 3, ccNumber = 11, value = 100)
+        assertEquals(0xB2.toByte(), packet1_4[2])
+
+        // XLR default = 4 (1-based), status 0xB3 (0-based 3)
+        val packetXlr = BleMidiPacketParser.createCcPacket(channel = 4, ccNumber = 11, value = 100)
+        assertEquals(0xB3.toByte(), packetXlr[2])
+
+        // PHONES default = 5 (1-based), status 0xB4 (0-based 4)
+        val packetPhones = BleMidiPacketParser.createCcPacket(channel = 5, ccNumber = 11, value = 100)
+        assertEquals(0xB4.toByte(), packetPhones[2])
+    }
+
+    @Test
+    fun testCreateAndParseRoundTrip() {
+        val packet = BleMidiPacketParser.createCcPacket(channel = 3, ccNumber = 11, value = 95)
+        val messages = BleMidiPacketParser.parse(packet)
+        assertEquals(1, messages.size)
+        assertEquals(2, messages[0].channel) // 0-based channel
+        assertEquals(11, messages[0].ccNumber)
+        assertEquals(95, messages[0].value)
     }
 }

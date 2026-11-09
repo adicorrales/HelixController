@@ -11,10 +11,12 @@ object BleMidiPacketParser {
     }
 
     /**
-     * Builds a raw MIDI Control Change (CC) packet (without BLE-MIDI header/timestamp bytes).
-     * Status byte: 0xB0 | (channel - 1)
-     * CC Number: ccNumber & 0x7F
-     * CC Value: value & 0x7F
+     * Builds an official 5-byte BLE-MIDI Control Change (CC) packet with timestamp header.
+     * Header Byte: 0x80 | ((timestamp >> 7) & 0x3F)
+     * Timestamp Byte: 0x80 | (timestamp & 0x7F)
+     * Status Byte: 0xB0 | ((channel - 1) & 0x0F)
+     * CC Byte: ccNumber & 0x7F
+     * Value Byte: value & 0x7F
      */
     fun createCcPacket(
         channel: Int,
@@ -22,13 +24,20 @@ object BleMidiPacketParser {
         value: Int,
         timestampMs: Long = System.currentTimeMillis()
     ): ByteArray {
+        val timestamp = (timestampMs and 0x1FFF).toInt()
+        val headerByte = (0x80 or ((timestamp shr 7) and 0x3F)).toByte()
+        val timestampByte = (0x80 or (timestamp and 0x7F)).toByte()
         val ch0 = if (channel in 1..16) channel - 1 else channel.coerceIn(0, 15)
+        val statusByte = (0xB0 or ch0).toByte()
+
         val packet = byteArrayOf(
-            (0xB0 or ch0).toByte(),
+            headerByte,
+            timestampByte,
+            statusByte,
             (ccNumber and 0x7F).toByte(),
             (value and 0x7F).toByte()
         )
-        logDebug("BleMidiPacketParser", "Created Raw CC Packet: channel=$channel (0-based=$ch0), cc=$ccNumber, val=$value, bytes=${packet.joinToString(" ") { "0x%02X".format(it) }}")
+        logDebug("BleMidiPacketParser", "Created BLE-MIDI CC Packet: channel=$channel (0-based=$ch0), cc=$ccNumber, val=$value, bytes=${packet.joinToString(" ") { "0x%02X".format(it) }}")
         return packet
     }
 

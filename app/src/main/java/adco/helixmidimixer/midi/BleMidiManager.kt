@@ -45,7 +45,7 @@ data class BleDeviceInfo(
     val rssi: Int
 )
 
-class BleMidiManager(private val context: Context) {
+open class BleMidiManager(private val context: Context) {
 
     companion object {
         private const val TAG = "BleMidiManager"
@@ -284,7 +284,7 @@ class BleMidiManager(private val context: Context) {
     }
 
     @SuppressLint("MissingPermission")
-    fun sendControlChange(channel: Int, ccNumber: Int, value: Int): Boolean {
+    open fun sendControlChange(channel: Int, ccNumber: Int, value: Int): Boolean {
         val gatt = bluetoothGatt
         val characteristic = midiCharacteristic
 
@@ -298,13 +298,12 @@ class BleMidiManager(private val context: Context) {
 
         return try {
             val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                gatt.writeCharacteristic(
+                val statusCode = gatt.writeCharacteristic(
                     characteristic,
                     packet,
                     BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
                 )
-                // Android 13+ writeCharacteristic returns Int status code
-                true // or check status == 0
+                statusCode == android.bluetooth.BluetoothStatusCodes.SUCCESS
             } else {
                 @Suppress("DEPRECATION")
                 characteristic.value = packet
