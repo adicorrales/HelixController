@@ -56,18 +56,26 @@ fun VerticalFader(
 ) {
     var componentHeightPx by remember { mutableFloatStateOf(1f) }
 
-    // Convert 0..127 value to dB display string
+    // Convert 0..127 value to dB display string (calibrated to Helix hardware specs)
     val dbText = remember(value) {
+        val clamped = value.coerceIn(0, 127)
         when {
-            value == 0 -> "-inf dB"
-            value == 100 -> "0.0 dB"
-            value > 100 -> {
-                val db = (value - 100) * (6.0 / 27.0)
-                "+${String.format("%.1f", db)} dB"
+            clamped == 0 -> "-inf dB"
+            clamped <= 12 -> {
+                val db = -120.0 + (clamped - 0) * ((-79.0 - (-120.0)) / 12.0)
+                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
+            }
+            clamped <= 62 -> {
+                val db = -79.0 + (clamped - 12) * ((-20.0 - (-79.0)) / (62.0 - 12.0))
+                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
+            }
+            clamped <= 108 -> {
+                val db = -20.0 + (clamped - 62) * ((0.0 - (-20.0)) / (108.0 - 62.0))
+                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
             }
             else -> {
-                val db = (100 - value) * (-60.0 / 100.0)
-                "${String.format("%.1f", db)} dB"
+                val db = 0.0 + (clamped - 108) * ((6.0 - 0.0) / (127.0 - 108.0))
+                "+${String.format(java.util.Locale.US, "%.1f", db)} dB"
             }
         }
     }
@@ -170,8 +178,8 @@ fun VerticalFader(
                 // 3. Draw Side Tick Marks (dB Scale markers)
                 val tickPositions = listOf(
                     1.0f to "+6",
-                    100f / 127f to "0",
-                    80f / 127f to "-6",
+                    108f / 127f to "0",
+                    85f / 127f to "-6",
                     60f / 127f to "-12",
                     40f / 127f to "-24",
                     20f / 127f to "-36",
@@ -254,18 +262,18 @@ fun VerticalFader(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // Reset Volume to 100 Button
+        // Reset Volume to 0.0 dB (CC 108) Button
         Box(
             modifier = Modifier
                 .clip(RoundedCornerShape(4.dp))
                 .background(HelixBadgeBg)
                 .border(0.5.dp, HelixCardBorder, RoundedCornerShape(4.dp))
-                .clickable { onValueChange(100) }
+                .clickable { onValueChange(108) }
                 .padding(horizontal = 6.dp, vertical = 2.dp),
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "100",
+                text = "0.0",
                 style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
@@ -286,7 +294,7 @@ fun VerticalFaderPreview() {
                 .padding(16.dp)
         ) {
             VerticalFader(
-                value = 100,
+                value = 108,
                 volumeCc = 11,
                 onValueChange = {},
                 isMuted = false

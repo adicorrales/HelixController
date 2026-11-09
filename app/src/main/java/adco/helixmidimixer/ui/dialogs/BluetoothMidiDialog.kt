@@ -8,6 +8,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -338,6 +339,7 @@ private fun StatusSummaryCard(
                     onClick = onDisconnect,
                     shape = RoundedCornerShape(6.dp),
                     colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF9B2C2C)),
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                     modifier = Modifier.height(32.dp)
                 ) {
                     Text("Disconnect", fontSize = 11.sp)
@@ -496,6 +498,7 @@ private fun DeviceItemRow(
                         colors = ButtonDefaults.buttonColors(
                             containerColor = if (isWidiMaster) HelixGreenPrimary else HelixGreenHeader
                         ),
+                        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 2.dp),
                         modifier = Modifier.height(30.dp)
                     ) {
                         Text("Connect", fontSize = 11.sp)

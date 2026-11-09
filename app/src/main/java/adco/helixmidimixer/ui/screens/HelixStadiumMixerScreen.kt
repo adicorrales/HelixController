@@ -117,12 +117,10 @@ fun HelixStadiumMixerScreen(
         MidiCcCustomizationDialog(
             initialMapping = midiCcMapping,
             matrixMidiChannels = matrixMidiChannels,
-            transportMidiChannel = transportMidiChannel,
             channelVisibilities = channelVisibilities,
             currentGroup = selectedGroup,
             onSaveMapping = { newMapping -> viewModel.updateMidiCcMapping(newMapping) },
             onSaveMatrixMidiChannel = { group, ch -> viewModel.saveMatrixMidiChannel(group, ch) },
-            onSaveTransportMidiChannel = { ch -> viewModel.saveTransportMidiChannel(ch) },
             onToggleChannelVisibility = { chIdx, visible -> viewModel.toggleChannelVisibility(chIdx, visible) },
             onDismiss = { showCcDialog = false }
         )

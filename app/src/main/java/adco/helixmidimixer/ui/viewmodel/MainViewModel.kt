@@ -56,6 +56,18 @@ class MainViewModel(
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
 
+    private var isSongLoaded = false
+    private val lastSentCcTime = mutableMapOf<Int, Long>()
+
+    private fun markCcSent(ccNumber: Int) {
+        lastSentCcTime[ccNumber] = System.currentTimeMillis()
+    }
+
+    private fun isCcSelfEcho(ccNumber: Int): Boolean {
+        val sentTime = lastSentCcTime[ccNumber] ?: return false
+        return (System.currentTimeMillis() - sentTime) < 400L
+    }
+
     val routesExpanded: StateFlow<Map<OutputGroup, Boolean>> = repository.getRoutesExpanded()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
@@ -131,7 +143,7 @@ class MainViewModel(
                 songNames[songIdx]
             } else null
 
-            val volumeVal = volumes[key] ?: 100 // Default 100 CC (~0dB)
+            val volumeVal = volumes[key] ?: 108 // Default 108 CC (0dB)
             val panVal = pans[key] ?: 64        // Default Center (64)
             val isMutedVal = mutes[key] ?: false
             val isSoloedVal = solos[key] ?: false
@@ -151,6 +163,29 @@ class MainViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        // Collect volume & pan states from DataStore repository
+        viewModelScope.launch {
+            repository.getVolumeStates().collect { savedVols ->
+                val current = _volumes.value.toMutableMap()
+                savedVols.forEach { (k, v) ->
+                    if (!current.containsKey(k)) {
+                        current[k] = v
+                    }
+                }
+                _volumes.value = current
+            }
+        }
+        viewModelScope.launch {
+            repository.getPanStates().collect { savedPans ->
+                val current = _pans.value.toMutableMap()
+                savedPans.forEach { (k, v) ->
+                    if (!current.containsKey(k)) {
+                        current[k] = v
+                    }
+                }
+                _pans.value = current
+            }
+        }
         // Listen to incoming MIDI CC packets over BLE
         viewModelScope.launch {
             bleMidiManager.incomingMidiCc.collect { ccMsg ->
@@ -186,6 +221,10 @@ class MainViewModel(
             mutableVols[key] = clampedVol
             _volumes.value = mutableVols
 
+            viewModelScope.launch {
+                repository.saveVolumeState(group, channelIndex, clampedVol)
+            }
+
             // Send BLE MIDI CC
             val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
             val midiCh = getActiveMatrixMidiChannel(group)
@@ -211,6 +250,10 @@ class MainViewModel(
             mutablePans[key] = clampedPan
             _pans.value = mutablePans
 
+            viewModelScope.launch {
+                repository.savePanState(group, channelIndex, clampedPan)
+            }
+
             // Send BLE MIDI CC
             val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
             val midiCh = getActiveMatrixMidiChannel(group)
@@ -234,6 +277,7 @@ class MainViewModel(
         // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
         val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
         val midiCh = getActiveMatrixMidiChannel(group)
+        markCcSent(channelCcMapping.muteCc)
         bleMidiManager.sendControlChange(
             channel = midiCh,
             ccNumber = channelCcMapping.muteCc,
@@ -253,6 +297,7 @@ class MainViewModel(
         // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
         val channelCcMapping = midiCcMapping.value.getChannelCc(group, channelIndex)
         val midiCh = getActiveMatrixMidiChannel(group)
+        markCcSent(channelCcMapping.soloCc)
         bleMidiManager.sendControlChange(
             channel = midiCh,
             ccNumber = channelCcMapping.soloCc,
@@ -276,6 +321,7 @@ class MainViewModel(
         }
         // Send Clear Solo CC (CC 94, value 127 >= 64)
         val midiCh = getActiveMatrixMidiChannel(group)
+        markCcSent(94)
         bleMidiManager.sendControlChange(channel = midiCh, ccNumber = 94, value = 127)
     }
 
@@ -323,30 +369,63 @@ class MainViewModel(
 
     fun sendTransportPrev() {
         val ch = getTransportMidiChannel0Based()
+        markCcSent(49)
+        markCcSent(51)
         bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 0)
-        if (songPlayMode.value != SongPlayMode.PLAY) {
-            _isPlaying.value = false
-        }
+        _isPlaying.value = false
+        isSongLoaded = false
     }
 
     fun sendTransportReturnToZero() {
         val ch = getTransportMidiChannel0Based()
+        markCcSent(47)
         bleMidiManager.sendControlChange(channel = ch, ccNumber = 47, value = 127)
     }
 
     fun toggleTransportPlay() {
-        val newPlaying = !_isPlaying.value
-        _isPlaying.value = newPlaying
         val ch = getTransportMidiChannel0Based()
-        bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+        val currentPlaying = _isPlaying.value
+
+        markCcSent(51)
+
+        if (currentPlaying) {
+            // Currently playing -> pause/stop playback
+            _isPlaying.value = false
+            isSongLoaded = false
+            bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+        } else {
+            // Currently stopped
+            when (songPlayMode.value) {
+                SongPlayMode.PLAY -> {
+                    _isPlaying.value = true
+                    isSongLoaded = false
+                    bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+                }
+                SongPlayMode.LOAD, SongPlayMode.LOAD_PRESET -> {
+                    if (!isSongLoaded) {
+                        // 1st click: Send CC 51 to load song/preset on Helix.
+                        // Audio does NOT start yet, so stay in stopped state (isPlaying = false)
+                        isSongLoaded = true
+                        _isPlaying.value = false
+                        bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+                    } else {
+                        // 2nd click: Send CC 51 to start audio playback!
+                        _isPlaying.value = true
+                        isSongLoaded = false
+                        bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+                    }
+                }
+            }
+        }
     }
 
     fun sendTransportNext() {
         val ch = getTransportMidiChannel0Based()
+        markCcSent(49)
+        markCcSent(51)
         bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 127)
-        if (songPlayMode.value != SongPlayMode.PLAY) {
-            _isPlaying.value = false
-        }
+        _isPlaying.value = false
+        isSongLoaded = false
     }
 
     fun toggleRoutesExpanded(group: OutputGroup, expanded: Boolean) {
@@ -381,6 +460,11 @@ class MainViewModel(
         val group = _selectedGroup.value
         val mapping = midiCcMapping.value
 
+        // Ignore self-echoes from app-initiated CC sends (e.g. Mute/Solo/Transport CCs)
+        if (isCcSelfEcho(ccNumber)) {
+            return
+        }
+
         // Handle Clear Solo CC (CC 94)
         if (ccNumber == 94 && value >= 64) {
             viewModelScope.launch {
@@ -393,7 +477,11 @@ class MainViewModel(
 
         // Handle Transport Play/Pause CC (CC 51)
         if (ccNumber == 51) {
-            _isPlaying.value = value >= 64
+            val isPlayingVal = value >= 64
+            _isPlaying.value = isPlayingVal
+            if (isPlayingVal) {
+                isSongLoaded = false
+            }
             return
         }
 

@@ -145,4 +145,21 @@ class DataStoreRepositoryTest {
         val savedMode = repository.getSongPlayMode().first()
         assertEquals(adco.helixmidimixer.data.model.SongPlayMode.LOAD_PRESET, savedMode)
     }
+
+    @Test
+    fun testVolumeAndPanPersistence() = runTest(testDispatcher) {
+        val defaultVols = repository.getVolumeStates().first()
+        assertEquals(108, defaultVols["${OutputGroup.OUTPUT_1_4.name}_0"])
+
+        repository.saveVolumeState(OutputGroup.OUTPUT_1_4, 0, 120)
+        val savedVols = repository.getVolumeStates().first()
+        assertEquals(120, savedVols["${OutputGroup.OUTPUT_1_4.name}_0"])
+
+        val defaultPans = repository.getPanStates().first()
+        assertEquals(64, defaultPans["${OutputGroup.OUTPUT_1_4.name}_0"])
+
+        repository.savePanState(OutputGroup.OUTPUT_1_4, 0, 32)
+        val savedPans = repository.getPanStates().first()
+        assertEquals(32, savedPans["${OutputGroup.OUTPUT_1_4.name}_0"])
+    }
 }

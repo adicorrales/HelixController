@@ -238,15 +238,37 @@ class MainViewModelTest {
 
     @Test
     fun testSongPlayModeBehaviorOnNextAndPrev() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.songPlayMode.collect {} }
         // Set mode to LOAD_PRESET
         viewModel.saveSongPlayMode(adco.helixmidimixer.data.model.SongPlayMode.LOAD_PRESET)
 
-        // Force isPlaying to true
+        // 1st click of PLAY in LOAD_PRESET mode -> loads song/preset, stays isPlaying = false
+        viewModel.toggleTransportPlay()
+        assertFalse(viewModel.isPlaying.value)
+
+        // 2nd click of PLAY in LOAD_PRESET mode -> starts audio, isPlaying = true
         viewModel.toggleTransportPlay()
         assertTrue(viewModel.isPlaying.value)
 
-        // Sending NEXT should reset isPlaying to false when in LOAD_PRESET mode
+        // Sending NEXT should reset isPlaying to false
         viewModel.sendTransportNext()
         assertFalse(viewModel.isPlaying.value)
+    }
+
+    @Test
+    fun testMuteSelfEchoSuppression() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.channelStates.collect {} }
+        viewModel.selectOutputGroup(OutputGroup.OUTPUT_1_4)
+        val muteCc = 57 // Mute CC for channelIndex 0 on OUTPUT_1_4
+
+        // 1. App toggles mute to UNMUTE (isMuted = false)
+        viewModel.toggleMute(channelIndex = 0, isMuted = false)
+        var ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertFalse(ch0State?.isMuted == true)
+
+        // 2. Helix echoes CC 57 with value 127 right back -> should be SUPPRESSED by self-echo filter!
+        bleMidiManager.emitIncomingCc(muteCc, 127)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertFalse(ch0State?.isMuted == true)
     }
 }

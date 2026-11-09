@@ -415,7 +415,7 @@ fun ChannelStripPreview() {
                     group = OutputGroup.OUTPUT_1_4,
                     channelIndex = 6,
                     customName = "Guitar 1",
-                    volume = 100,
+                    volume = 108,
                     pan = 64,
                     isMuted = false,
                     isSoloed = false

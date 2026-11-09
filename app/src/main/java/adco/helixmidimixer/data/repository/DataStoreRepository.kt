@@ -34,6 +34,12 @@ class DataStoreRepository(
         fun songChannelNameKey(songIndex: Int): Preferences.Key<String> =
             stringPreferencesKey("song_ch_name_$songIndex")
 
+        fun volumeKey(group: OutputGroup, channelIndex: Int): Preferences.Key<Int> =
+            intPreferencesKey("vol_${group.name}_$channelIndex")
+
+        fun panKey(group: OutputGroup, channelIndex: Int): Preferences.Key<Int> =
+            intPreferencesKey("pan_${group.name}_$channelIndex")
+
         fun muteStateKey(group: OutputGroup, channelIndex: Int): Preferences.Key<Boolean> =
             booleanPreferencesKey("mute_${group.name}_$channelIndex")
 
@@ -175,6 +181,46 @@ class DataStoreRepository(
     suspend fun saveChannelName(group: OutputGroup, channelIndex: Int, name: String) {
         dataStore.edit { prefs ->
             prefs[channelNameKey(group, channelIndex)] = name
+        }
+    }
+
+    // --- Volume States ---
+    fun getVolumeStates(): Flow<Map<String, Int>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<String, Int>()
+            for (group in OutputGroup.entries) {
+                for (ch in 0..18) {
+                    val vol = prefs[volumeKey(group, ch)] ?: 108
+                    map["${group.name}_$ch"] = vol
+                }
+            }
+            map
+        }
+    }
+
+    suspend fun saveVolumeState(group: OutputGroup, channelIndex: Int, volume: Int) {
+        dataStore.edit { prefs ->
+            prefs[volumeKey(group, channelIndex)] = volume.coerceIn(0, 127)
+        }
+    }
+
+    // --- Pan States ---
+    fun getPanStates(): Flow<Map<String, Int>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<String, Int>()
+            for (group in OutputGroup.entries) {
+                for (ch in 0..18) {
+                    val pan = prefs[panKey(group, ch)] ?: 64
+                    map["${group.name}_$ch"] = pan
+                }
+            }
+            map
+        }
+    }
+
+    suspend fun savePanState(group: OutputGroup, channelIndex: Int, pan: Int) {
+        dataStore.edit { prefs ->
+            prefs[panKey(group, channelIndex)] = pan.coerceIn(0, 127)
         }
     }
 
