@@ -66,6 +66,9 @@ class DataStoreRepository(
 
         private val SONG_PLAY_MODE_KEY: Preferences.Key<String> =
             stringPreferencesKey("song_play_mode")
+
+        private val SELECTED_GROUP_KEY: Preferences.Key<String> =
+            stringPreferencesKey("selected_output_group")
     }
 
     // --- Transport MIDI Channel ---
@@ -92,6 +95,20 @@ class DataStoreRepository(
     suspend fun saveSongPlayMode(mode: SongPlayMode) {
         dataStore.edit { prefs ->
             prefs[SONG_PLAY_MODE_KEY] = mode.name
+        }
+    }
+
+    // --- Selected Output Group ---
+    fun getSelectedGroup(): Flow<OutputGroup> {
+        return dataStore.data.map { prefs ->
+            val groupName = prefs[SELECTED_GROUP_KEY]
+            groupName?.let { runCatching { OutputGroup.valueOf(it) }.getOrNull() } ?: OutputGroup.OUTPUT_1_4
+        }
+    }
+
+    suspend fun saveSelectedGroup(group: OutputGroup) {
+        dataStore.edit { prefs ->
+            prefs[SELECTED_GROUP_KEY] = group.name
         }
     }
 

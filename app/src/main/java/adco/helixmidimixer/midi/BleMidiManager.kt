@@ -64,6 +64,9 @@ open class BleMidiManager(private val context: Context) {
     private var bluetoothGatt: BluetoothGatt? = null
     private var midiCharacteristic: BluetoothGattCharacteristic? = null
 
+    private var isManualDisconnect = false
+    private var lastConnectedDevice: BluetoothDevice? = null
+
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
     private val _connectionState = MutableStateFlow<BleConnectionState>(BleConnectionState.Disconnected)
@@ -120,8 +123,18 @@ open class BleMidiManager(private val context: Context) {
             } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
                 Log.d(TAG, "Disconnected from GATT server.")
                 midiCharacteristic = null
-                bluetoothGatt = null
                 _connectionState.value = BleConnectionState.Disconnected
+
+                // Auto-reconnect in background if disconnected unexpectedly (not manual)
+                if (!isManualDisconnect && lastConnectedDevice != null) {
+                    Log.d(TAG, "Attempting auto-reconnect to ${lastConnectedDevice?.name}...")
+                    scope.launch {
+                        kotlinx.coroutines.delay(2000L)
+                        if (!isManualDisconnect && _connectionState.value is BleConnectionState.Disconnected) {
+                            lastConnectedDevice?.let { connect(it) }
+                        }
+                    }
+                }
             }
         }
 
@@ -242,12 +255,15 @@ open class BleMidiManager(private val context: Context) {
     @SuppressLint("MissingPermission")
     fun connect(device: BluetoothDevice) {
         stopScan()
+        isManualDisconnect = false
+        lastConnectedDevice = device
         _connectionState.value = BleConnectionState.Connecting(device.name)
         try {
+            bluetoothGatt?.close()
             bluetoothGatt = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                device.connectGatt(context, false, gattCallback, BluetoothDevice.TRANSPORT_LE)
+                device.connectGatt(context, true, gattCallback, BluetoothDevice.TRANSPORT_LE)
             } else {
-                device.connectGatt(context, false, gattCallback)
+                device.connectGatt(context, true, gattCallback)
             }
         } catch (e: SecurityException) {
             Log.e(TAG, "Missing permission to connect BLE device", e)
@@ -276,6 +292,7 @@ open class BleMidiManager(private val context: Context) {
 
     @SuppressLint("MissingPermission")
     fun disconnect() {
+        isManualDisconnect = true
         try {
             bluetoothGatt?.disconnect()
             bluetoothGatt?.close()

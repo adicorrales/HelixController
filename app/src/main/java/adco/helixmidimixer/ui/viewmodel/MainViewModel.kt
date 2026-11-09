@@ -163,6 +163,12 @@ class MainViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyList())
 
     init {
+        // Collect selected group from DataStore repository
+        viewModelScope.launch {
+            repository.getSelectedGroup().collect { group ->
+                _selectedGroup.value = group
+            }
+        }
         // Collect volume & pan states from DataStore repository
         viewModelScope.launch {
             repository.getVolumeStates().collect { savedVols ->
@@ -205,6 +211,9 @@ class MainViewModel(
 
     fun selectOutputGroup(group: OutputGroup) {
         _selectedGroup.value = group
+        viewModelScope.launch {
+            repository.saveSelectedGroup(group)
+        }
     }
 
     fun onVolumeChange(channelIndex: Int, volume: Int) {

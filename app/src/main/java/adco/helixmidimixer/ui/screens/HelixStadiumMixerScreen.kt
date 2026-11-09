@@ -60,7 +60,8 @@ fun HelixStadiumMixerScreen(
                 onOutputGroupSelected = { group -> viewModel.selectOutputGroup(group) },
                 bleConnectionState = bleConnectionState,
                 onOpenBleDialog = { showBleDialog = true },
-                onOpenCcDialog = { showCcDialog = true }
+                onOpenCcDialog = { showCcDialog = true },
+                onDisconnect = { viewModel.disconnectBleDevice() }
             )
         },
         bottomBar = {

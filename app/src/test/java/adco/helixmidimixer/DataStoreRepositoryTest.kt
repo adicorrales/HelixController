@@ -162,4 +162,14 @@ class DataStoreRepositoryTest {
         val savedPans = repository.getPanStates().first()
         assertEquals(32, savedPans["${OutputGroup.OUTPUT_1_4.name}_0"])
     }
+
+    @Test
+    fun testSelectedGroupPersistence() = runTest(testDispatcher) {
+        val defaultGroup = repository.getSelectedGroup().first()
+        assertEquals(OutputGroup.OUTPUT_1_4, defaultGroup)
+
+        repository.saveSelectedGroup(OutputGroup.PHONES)
+        val savedGroup = repository.getSelectedGroup().first()
+        assertEquals(OutputGroup.PHONES, savedGroup)
+    }
 }
