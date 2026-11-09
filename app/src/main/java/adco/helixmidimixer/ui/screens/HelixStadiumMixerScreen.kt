@@ -21,6 +21,7 @@ import adco.helixmidimixer.ui.dialogs.BluetoothMidiDialog
 import adco.helixmidimixer.ui.dialogs.EditChannelNameDialog
 import adco.helixmidimixer.ui.dialogs.MidiCcCustomizationDialog
 import adco.helixmidimixer.ui.dialogs.PanAdjustmentDialog
+import adco.helixmidimixer.ui.dialogs.TransportSettingsDialog
 import adco.helixmidimixer.ui.theme.HelixBackground
 import adco.helixmidimixer.ui.viewmodel.MainViewModel
 
@@ -34,6 +35,7 @@ fun HelixStadiumMixerScreen(
     val midiCcMapping by viewModel.midiCcMapping.collectAsStateWithLifecycle()
     val matrixMidiChannels by viewModel.matrixMidiChannels.collectAsStateWithLifecycle()
     val transportMidiChannel by viewModel.transportMidiChannel.collectAsStateWithLifecycle()
+    val songPlayMode by viewModel.songPlayMode.collectAsStateWithLifecycle()
     val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val routesExpanded by viewModel.routesExpanded.collectAsStateWithLifecycle()
     val songChannelsExpanded by viewModel.songChannelsExpanded.collectAsStateWithLifecycle()
@@ -44,6 +46,7 @@ fun HelixStadiumMixerScreen(
     // Dialog state management
     var showBleDialog by remember { mutableStateOf(false) }
     var showCcDialog by remember { mutableStateOf(false) }
+    var showTransportSettingsDialog by remember { mutableStateOf(false) }
     var panChannelTarget by remember { mutableStateOf<Int?>(null) } // channelIndex
     var renameSongTarget by remember { mutableStateOf<Int?>(null) } // songIndex (1..8)
 
@@ -66,7 +69,8 @@ fun HelixStadiumMixerScreen(
                 onPrev = { viewModel.sendTransportPrev() },
                 onReturnToZero = { viewModel.sendTransportReturnToZero() },
                 onPlayToggle = { viewModel.toggleTransportPlay() },
-                onNext = { viewModel.sendTransportNext() }
+                onNext = { viewModel.sendTransportNext() },
+                onOpenSettings = { showTransportSettingsDialog = true }
             )
         }
     ) { innerPadding ->
@@ -124,7 +128,18 @@ fun HelixStadiumMixerScreen(
         )
     }
 
-    // 3. Pan Adjustment Dialog
+    // 3. Transport & Song Settings Dialog
+    if (showTransportSettingsDialog) {
+        TransportSettingsDialog(
+            initialTransportChannel = transportMidiChannel,
+            initialSongPlayMode = songPlayMode,
+            onSaveTransportChannel = { ch -> viewModel.saveTransportMidiChannel(ch) },
+            onSaveSongPlayMode = { mode -> viewModel.saveSongPlayMode(mode) },
+            onDismiss = { showTransportSettingsDialog = false }
+        )
+    }
+
+    // 4. Pan Adjustment Dialog
     panChannelTarget?.let { chIdx ->
         val chState = channelStates.find { channelState -> channelState.channelIndex == chIdx }
         val panCc = midiCcMapping.getChannelCc(selectedGroup, chIdx).panCc
@@ -139,7 +154,7 @@ fun HelixStadiumMixerScreen(
         }
     }
 
-    // 4. Edit Song Channel Name Dialog
+    // 5. Edit Song Channel Name Dialog
     renameSongTarget?.let { songIdx ->
         val chIdx = songIdx + 5 // song 1..8 -> channel 6..13
         val chState = channelStates.find { channelState -> channelState.channelIndex == chIdx }

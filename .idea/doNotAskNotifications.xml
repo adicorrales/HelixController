@@ -5,6 +5,7 @@
       <map>
         <entry key="vcs.commit.finished" value="13 files committed" />
         <entry key="vcs.commit.finished.initial" value="75 files committed" />
+        <entry key="vcs.post.commit.checks.failed" value="Commit contains problems" />
       </map>
     </option>
   </component>

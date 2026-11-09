@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Pause
 import androidx.compose.material.icons.rounded.PlayArrow
 import androidx.compose.material.icons.rounded.Replay
+import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material.icons.rounded.SkipNext
 import androidx.compose.material.icons.rounded.SkipPrevious
 import androidx.compose.material3.Icon
@@ -48,7 +49,8 @@ fun TransportBar(
     onReturnToZero: () -> Unit,
     onPlayToggle: () -> Unit,
     onNext: () -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    onOpenSettings: (() -> Unit)? = null
 ) {
     Surface(
         modifier = modifier
@@ -99,6 +101,15 @@ fun TransportBar(
                     icon = Icons.Rounded.SkipNext,
                     onClick = onNext
                 )
+
+                // Transport / Helix Song Settings Button
+                if (onOpenSettings != null) {
+                    TransportButton(
+                        label = "SET",
+                        icon = Icons.Rounded.Settings,
+                        onClick = onOpenSettings
+                    )
+                }
             }
         }
     }

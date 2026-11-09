@@ -11,6 +11,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import adco.helixmidimixer.data.model.HomeRoute
 import adco.helixmidimixer.data.model.MidiCcMapping
 import adco.helixmidimixer.data.model.OutputGroup
+import adco.helixmidimixer.data.model.SongPlayMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.serialization.encodeToString
@@ -56,6 +57,9 @@ class DataStoreRepository(
 
         val TRANSPORT_MIDI_CHANNEL_KEY: Preferences.Key<Int> =
             intPreferencesKey("transport_midi_channel")
+
+        private val SONG_PLAY_MODE_KEY: Preferences.Key<String> =
+            stringPreferencesKey("song_play_mode")
     }
 
     // --- Transport MIDI Channel ---
@@ -68,6 +72,20 @@ class DataStoreRepository(
     suspend fun saveTransportMidiChannel(channel: Int) {
         dataStore.edit { prefs ->
             prefs[TRANSPORT_MIDI_CHANNEL_KEY] = channel.coerceIn(1, 16)
+        }
+    }
+
+    // --- Song Play Mode ---
+    fun getSongPlayMode(): Flow<SongPlayMode> {
+        return dataStore.data.map { prefs ->
+            val modeName = prefs[SONG_PLAY_MODE_KEY]
+            modeName?.let { runCatching { SongPlayMode.valueOf(it) }.getOrNull() } ?: SongPlayMode.PLAY
+        }
+    }
+
+    suspend fun saveSongPlayMode(mode: SongPlayMode) {
+        dataStore.edit { prefs ->
+            prefs[SONG_PLAY_MODE_KEY] = mode.name
         }
     }
 

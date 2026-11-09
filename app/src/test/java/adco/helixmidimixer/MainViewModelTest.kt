@@ -222,4 +222,31 @@ class MainViewModelTest {
         ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
         assertEquals(0, ch0State?.pan)
     }
+
+    @Test
+    fun testIncomingTransportPlayCcUpdatesIsPlayingState() = runTest(testDispatcher) {
+        assertFalse(viewModel.isPlaying.value)
+
+        // Incoming CC 51 with value 127 (Play) -> isPlaying should be true
+        bleMidiManager.emitIncomingCc(51, 127)
+        assertTrue(viewModel.isPlaying.value)
+
+        // Incoming CC 51 with value 0 (Stop/Pause) -> isPlaying should be false
+        bleMidiManager.emitIncomingCc(51, 0)
+        assertFalse(viewModel.isPlaying.value)
+    }
+
+    @Test
+    fun testSongPlayModeBehaviorOnNextAndPrev() = runTest(testDispatcher) {
+        // Set mode to LOAD_PRESET
+        viewModel.saveSongPlayMode(adco.helixmidimixer.data.model.SongPlayMode.LOAD_PRESET)
+
+        // Force isPlaying to true
+        viewModel.toggleTransportPlay()
+        assertTrue(viewModel.isPlaying.value)
+
+        // Sending NEXT should reset isPlaying to false when in LOAD_PRESET mode
+        viewModel.sendTransportNext()
+        assertFalse(viewModel.isPlaying.value)
+    }
 }

@@ -7,6 +7,7 @@ import adco.helixmidimixer.data.model.ChannelState
 import adco.helixmidimixer.data.model.HomeRoute
 import adco.helixmidimixer.data.model.MidiCcMapping
 import adco.helixmidimixer.data.model.OutputGroup
+import adco.helixmidimixer.data.model.SongPlayMode
 import adco.helixmidimixer.data.repository.DataStoreRepository
 import adco.helixmidimixer.midi.BleConnectionState
 import adco.helixmidimixer.midi.BleDeviceInfo
@@ -48,6 +49,9 @@ class MainViewModel(
 
     val transportMidiChannel: StateFlow<Int> = repository.getTransportMidiChannel()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+
+    val songPlayMode: StateFlow<SongPlayMode> = repository.getSongPlayMode()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SongPlayMode.PLAY)
 
     private val _isPlaying = MutableStateFlow(false)
     val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
@@ -306,6 +310,12 @@ class MainViewModel(
         }
     }
 
+    fun saveSongPlayMode(mode: SongPlayMode) {
+        viewModelScope.launch {
+            repository.saveSongPlayMode(mode)
+        }
+    }
+
     private fun getTransportMidiChannel0Based(): Int {
         val channel1Based = transportMidiChannel.value
         return (channel1Based - 1).coerceIn(0, 15)
@@ -314,6 +324,9 @@ class MainViewModel(
     fun sendTransportPrev() {
         val ch = getTransportMidiChannel0Based()
         bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 0)
+        if (songPlayMode.value != SongPlayMode.PLAY) {
+            _isPlaying.value = false
+        }
     }
 
     fun sendTransportReturnToZero() {
@@ -331,6 +344,9 @@ class MainViewModel(
     fun sendTransportNext() {
         val ch = getTransportMidiChannel0Based()
         bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 127)
+        if (songPlayMode.value != SongPlayMode.PLAY) {
+            _isPlaying.value = false
+        }
     }
 
     fun toggleRoutesExpanded(group: OutputGroup, expanded: Boolean) {
@@ -372,6 +388,12 @@ class MainViewModel(
                     repository.saveSoloState(group, chIdx, false)
                 }
             }
+            return
+        }
+
+        // Handle Transport Play/Pause CC (CC 51)
+        if (ccNumber == 51) {
+            _isPlaying.value = value >= 64
             return
         }
 

@@ -135,4 +135,14 @@ class DataStoreRepositoryTest {
         assertEquals(10, updatedChannels[OutputGroup.XLR])
         assertEquals(16, updatedChannels[OutputGroup.PHONES])
     }
+
+    @Test
+    fun testSongPlayModePersistence() = runTest(testDispatcher) {
+        val defaultMode = repository.getSongPlayMode().first()
+        assertEquals(adco.helixmidimixer.data.model.SongPlayMode.PLAY, defaultMode)
+
+        repository.saveSongPlayMode(adco.helixmidimixer.data.model.SongPlayMode.LOAD_PRESET)
+        val savedMode = repository.getSongPlayMode().first()
+        assertEquals(adco.helixmidimixer.data.model.SongPlayMode.LOAD_PRESET, savedMode)
+    }
 }
