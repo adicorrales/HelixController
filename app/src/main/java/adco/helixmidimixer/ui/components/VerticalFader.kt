@@ -54,18 +54,34 @@ fun VerticalFader(
 ) {
     var componentHeightPx by remember { mutableFloatStateOf(1f) }
 
-    // Convert 0..127 value to dB display string (calibrated to Helix hardware specs: 0 = -120dB, 127 = +6dB)
+    // Convert 0..127 value to dB display string (calibrated to Helix hardware specs using empirical validation points)
     val dbText = remember(value) {
         val clamped = value.coerceIn(0, 127)
         val db = when {
             clamped == 0 -> -120.0
-            clamped <= 12 -> -120.0 + (clamped - 0) * ((-79.0 - (-120.0)) / 12.0)
-            clamped <= 62 -> -79.0 + (clamped - 12) * ((-20.0 - (-79.0)) / (62.0 - 12.0))
-            clamped <= 108 -> -20.0 + (clamped - 62) * ((0.0 - (-20.0)) / (108.0 - 62.0))
-            else -> 0.0 + (clamped - 108) * ((6.0 - 0.0) / (127.0 - 108.0))
+            clamped <= 10 -> -120.0 + (clamped - 0) * ((-86.0 - (-120.0)) / 10.0)
+            clamped <= 20 -> -86.0 + (clamped - 10) * ((-60.0 - (-86.0)) / (20.0 - 10.0))
+            clamped <= 30 -> -60.0 + (clamped - 20) * ((-46.0 - (-60.0)) / (30.0 - 20.0))
+            clamped <= 40 -> -46.0 + (clamped - 30) * ((-36.0 - (-46.0)) / (40.0 - 30.0))
+            clamped <= 50 -> -36.0 + (clamped - 40) * ((-28.0 - (-36.0)) / (50.0 - 40.0))
+            clamped <= 60 -> -28.0 + (clamped - 50) * ((-21.0 - (-28.0)) / (60.0 - 50.0))
+            clamped <= 70 -> -21.0 + (clamped - 60) * ((-16.0 - (-21.0)) / (70.0 - 60.0))
+            clamped <= 80 -> -16.0 + (clamped - 70) * ((-11.0 - (-16.0)) / (80.0 - 70.0))
+            clamped <= 90 -> -11.0 + (clamped - 80) * ((-6.0 - (-11.0)) / (90.0 - 80.0))
+            clamped <= 100 -> -6.0 + (clamped - 90) * ((-2.6 - (-6.0)) / (100.0 - 90.0))
+            clamped <= 110 -> -2.6 + (clamped - 100) * ((0.8 - (-2.6)) / (110.0 - 100.0))
+            clamped <= 120 -> 0.8 + (clamped - 110) * ((4.0 - (0.8)) / (120.0 - 110.0))
+            else -> 4.0 + (clamped - 120) * ((6.0 - 4.0) / (127.0 - 120.0))
         }
-        if (db >= 0) "+${String.format(java.util.Locale.US, "%.1f", db)} dB"
-        else "${String.format(java.util.Locale.US, "%.1f", db)} dB"
+
+        val formatted = if (db in -9.9..6.0) {
+            String.format(java.util.Locale.US, "%.1f", db)
+        } else {
+            String.format(java.util.Locale.US, "%.0f", db)
+        }
+
+        if (db > 0) "+$formatted dB"
+        else "$formatted dB"
     }
 
     Column(
@@ -261,7 +277,7 @@ fun VerticalFader(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "0.0",
+                text = "0.0 dB",
                 style = androidx.compose.material3.MaterialTheme.typography.labelSmall.copy(
                     fontSize = 9.sp,
                     fontWeight = FontWeight.Bold,
