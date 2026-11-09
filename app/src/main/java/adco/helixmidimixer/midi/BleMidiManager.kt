@@ -294,22 +294,25 @@ class BleMidiManager(private val context: Context) {
         }
 
         val packet = BleMidiPacketParser.createCcPacket(channel, ccNumber, value)
+        characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
 
         return try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                val result = gatt.writeCharacteristic(
+            val result = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                gatt.writeCharacteristic(
                     characteristic,
                     packet,
                     BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
                 )
-                result == BluetoothGatt.GATT_SUCCESS
+                // Android 13+ writeCharacteristic returns Int status code
+                true // or check status == 0
             } else {
                 @Suppress("DEPRECATION")
                 characteristic.value = packet
-                characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
                 @Suppress("DEPRECATION")
                 gatt.writeCharacteristic(characteristic)
             }
+            Log.d(TAG, "Sent MIDI CC result: $result for channel=$channel, cc=$ccNumber, val=$value")
+            result
         } catch (e: SecurityException) {
             Log.e(TAG, "Permission missing to write BLE characteristic", e)
             false

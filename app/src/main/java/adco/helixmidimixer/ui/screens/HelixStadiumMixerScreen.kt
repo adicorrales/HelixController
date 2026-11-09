@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import adco.helixmidimixer.ui.components.ChannelStripsRow
 import adco.helixmidimixer.ui.components.MatrixTopBar
+import adco.helixmidimixer.ui.components.TransportBar
 import adco.helixmidimixer.ui.dialogs.BluetoothMidiDialog
 import adco.helixmidimixer.ui.dialogs.EditChannelNameDialog
 import adco.helixmidimixer.ui.dialogs.MidiCcCustomizationDialog
@@ -32,7 +33,10 @@ fun HelixStadiumMixerScreen(
     val channelStates by viewModel.channelStates.collectAsStateWithLifecycle()
     val midiCcMapping by viewModel.midiCcMapping.collectAsStateWithLifecycle()
     val matrixMidiChannels by viewModel.matrixMidiChannels.collectAsStateWithLifecycle()
+    val transportMidiChannel by viewModel.transportMidiChannel.collectAsStateWithLifecycle()
+    val isPlaying by viewModel.isPlaying.collectAsStateWithLifecycle()
     val routesExpanded by viewModel.routesExpanded.collectAsStateWithLifecycle()
+    val songChannelsExpanded by viewModel.songChannelsExpanded.collectAsStateWithLifecycle()
     val channelVisibilities by viewModel.channelVisibilities.collectAsStateWithLifecycle()
     val bleConnectionState by viewModel.bleConnectionState.collectAsStateWithLifecycle()
     val scannedDevices by viewModel.scannedDevices.collectAsStateWithLifecycle()
@@ -55,6 +59,15 @@ fun HelixStadiumMixerScreen(
                 onOpenBleDialog = { showBleDialog = true },
                 onOpenCcDialog = { showCcDialog = true }
             )
+        },
+        bottomBar = {
+            TransportBar(
+                isPlaying = isPlaying,
+                onPrev = { viewModel.sendTransportPrev() },
+                onReturnToZero = { viewModel.sendTransportReturnToZero() },
+                onPlayToggle = { viewModel.toggleTransportPlay() },
+                onNext = { viewModel.sendTransportNext() }
+            )
         }
     ) { innerPadding ->
         Box(
@@ -68,6 +81,7 @@ fun HelixStadiumMixerScreen(
                 midiCcMapping = midiCcMapping,
                 selectedGroup = selectedGroup,
                 routesExpanded = routesExpanded,
+                songChannelsExpanded = songChannelsExpanded,
                 onVolumeChanged = { chIdx, newVol -> viewModel.updateVolume(chIdx, newVol) },
                 onPanChanged = { chIdx, newPan -> viewModel.updatePan(chIdx, newPan) },
                 onMuteToggled = { chIdx, isMuted -> viewModel.toggleMute(chIdx, isMuted) },
@@ -75,7 +89,8 @@ fun HelixStadiumMixerScreen(
                 onHomeRouteChanged = { newRoute -> viewModel.updateHomeRoute(newRoute) },
                 onOpenPanDialog = { chIdx -> panChannelTarget = chIdx },
                 onChannelRenameRequested = { songIdx -> renameSongTarget = songIdx },
-                onToggleRoutesExpanded = { group, expanded -> viewModel.toggleRoutesExpanded(group, expanded) }
+                onToggleRoutesExpanded = { group, expanded -> viewModel.toggleRoutesExpanded(group, expanded) },
+                onToggleSongChannelsExpanded = { group, expanded -> viewModel.toggleSongChannelsExpanded(group, expanded) }
             )
         }
     }
@@ -98,10 +113,12 @@ fun HelixStadiumMixerScreen(
         MidiCcCustomizationDialog(
             initialMapping = midiCcMapping,
             matrixMidiChannels = matrixMidiChannels,
+            transportMidiChannel = transportMidiChannel,
             channelVisibilities = channelVisibilities,
             currentGroup = selectedGroup,
             onSaveMapping = { newMapping -> viewModel.updateMidiCcMapping(newMapping) },
             onSaveMatrixMidiChannel = { group, ch -> viewModel.saveMatrixMidiChannel(group, ch) },
+            onSaveTransportMidiChannel = { ch -> viewModel.saveTransportMidiChannel(ch) },
             onToggleChannelVisibility = { chIdx, visible -> viewModel.toggleChannelVisibility(chIdx, visible) },
             onDismiss = { showCcDialog = false }
         )

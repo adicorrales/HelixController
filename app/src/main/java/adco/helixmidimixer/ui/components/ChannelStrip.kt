@@ -85,6 +85,8 @@ fun ChannelStrip(
     onChannelRenameRequested: () -> Unit,
     isRoutesExpanded: Boolean = false,
     onToggleRoutesExpanded: ((Boolean) -> Unit)? = null,
+    isSongChannelsExpanded: Boolean = true,
+    onToggleSongChannelsExpanded: ((Boolean) -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     // Determine category styling
@@ -149,17 +151,20 @@ fun ChannelStrip(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
-                    if (channelState.channelIndex == 0 && onToggleRoutesExpanded != null) {
+                    if ((channelState.channelIndex == 0 && onToggleRoutesExpanded != null) ||
+                        (channelState.channelIndex == 5 && onToggleSongChannelsExpanded != null)) {
+                        val isExp = if (channelState.channelIndex == 0) isRoutesExpanded else isSongChannelsExpanded
+                        val toggleAct = if (channelState.channelIndex == 0) onToggleRoutesExpanded else onToggleSongChannelsExpanded
                         Box(
                             modifier = Modifier
                                 .size(18.dp)
                                 .clip(CircleShape)
                                 .background(HelixBadgeBg)
-                                .clickable { onToggleRoutesExpanded(!isRoutesExpanded) },
+                                .clickable { toggleAct?.invoke(!isExp) },
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = if (isRoutesExpanded) "-" else "+",
+                                text = if (isExp) "-" else "+",
                                 style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 12.sp,

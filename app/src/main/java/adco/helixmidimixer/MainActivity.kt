@@ -6,7 +6,6 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -45,9 +44,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             HelixMidiMixerTheme {
                 Surface(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .systemBarsPadding(),
+                    modifier = Modifier.fillMaxSize(),
                     color = HelixBackground
                 ) {
                     HelixStadiumMixerScreen(viewModel = viewModel)

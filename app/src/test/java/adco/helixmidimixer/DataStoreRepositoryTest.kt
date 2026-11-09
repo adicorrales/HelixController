@@ -108,4 +108,14 @@ class DataStoreRepositoryTest {
         assertEquals(52, ch0Cc.muteCc)
         assertEquals(53, ch0Cc.soloCc)
     }
+
+    @Test
+    fun testTransportMidiChannelPersistence() = runTest(testDispatcher) {
+        val defaultCh = repository.getTransportMidiChannel().first()
+        assertEquals(1, defaultCh)
+
+        repository.saveTransportMidiChannel(5)
+        val savedCh = repository.getTransportMidiChannel().first()
+        assertEquals(5, savedCh)
+    }
 }

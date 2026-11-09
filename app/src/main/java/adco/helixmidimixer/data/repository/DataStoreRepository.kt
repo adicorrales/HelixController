@@ -51,6 +51,9 @@ class DataStoreRepository(
         fun routesExpandedKey(group: OutputGroup): Preferences.Key<Boolean> =
             booleanPreferencesKey("routes_expanded_${group.name}")
 
+        fun songChannelsExpandedKey(group: OutputGroup): Preferences.Key<Boolean> =
+            booleanPreferencesKey("song_channels_expanded_${group.name}")
+
         val TRANSPORT_MIDI_CHANNEL_KEY: Preferences.Key<Int> =
             intPreferencesKey("transport_midi_channel")
     }
@@ -104,6 +107,23 @@ class DataStoreRepository(
     suspend fun saveRoutesExpanded(group: OutputGroup, expanded: Boolean) {
         dataStore.edit { prefs ->
             prefs[routesExpandedKey(group)] = expanded
+        }
+    }
+
+    // --- Song Channels Expanded State ---
+    fun getSongChannelsExpanded(): Flow<Map<OutputGroup, Boolean>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<OutputGroup, Boolean>()
+            for (group in OutputGroup.entries) {
+                map[group] = prefs[songChannelsExpandedKey(group)] ?: true // visible by default on startup
+            }
+            map
+        }
+    }
+
+    suspend fun saveSongChannelsExpanded(group: OutputGroup, expanded: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[songChannelsExpandedKey(group)] = expanded
         }
     }
 

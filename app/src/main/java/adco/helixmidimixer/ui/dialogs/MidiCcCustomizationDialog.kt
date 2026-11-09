@@ -75,10 +75,12 @@ private enum class CcType { VOLUME, PAN, MUTE, SOLO }
 fun MidiCcCustomizationDialog(
     initialMapping: MidiCcMapping,
     matrixMidiChannels: Map<OutputGroup, Int>,
+    transportMidiChannel: Int,
     channelVisibilities: Map<String, Boolean>,
     currentGroup: OutputGroup,
     onSaveMapping: (MidiCcMapping) -> Unit,
     onSaveMatrixMidiChannel: (OutputGroup, Int) -> Unit,
+    onSaveTransportMidiChannel: (Int) -> Unit,
     onToggleChannelVisibility: (Int, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
@@ -158,6 +160,61 @@ fun MidiCcCustomizationDialog(
                                 )
                             }
                         )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Transport MIDI Channel Selector
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(HelixBadgeBg)
+                        .border(1.dp, HelixCardBorder, RoundedCornerShape(6.dp))
+                        .padding(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        text = "Transport MIDI Channel:",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = HelixTextPrimary
+                        )
+                    )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        OutlinedButton(
+                            onClick = {
+                                if (transportMidiChannel > 1) {
+                                    onSaveTransportMidiChannel(transportMidiChannel - 1)
+                                }
+                            },
+                            modifier = Modifier.size(32.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("-", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Ch $transportMidiChannel",
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold,
+                                color = HelixGreenPrimary
+                            )
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                if (transportMidiChannel < 16) {
+                                    onSaveTransportMidiChannel(transportMidiChannel + 1)
+                                }
+                            },
+                            modifier = Modifier.size(32.dp),
+                            contentPadding = PaddingValues(0.dp)
+                        ) {
+                            Text("+", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
 

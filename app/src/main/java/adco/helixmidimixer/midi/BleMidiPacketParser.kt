@@ -2,11 +2,17 @@ package adco.helixmidimixer.midi
 
 object BleMidiPacketParser {
 
+    private fun logDebug(tag: String, msg: String) {
+        try {
+            android.util.Log.d(tag, msg)
+        } catch (e: Throwable) {
+            println("[$tag] $msg")
+        }
+    }
+
     /**
-     * Builds a standard BLE MIDI packet containing a single Control Change (CC) message.
-     * Header byte: 0x80 | (timestampHigh & 0x3F)
-     * Timestamp byte: 0x80 | (timestampLow & 0x7F)
-     * Status byte: 0xB0 | (channel & 0x0F)
+     * Builds a raw MIDI Control Change (CC) packet (without BLE-MIDI header/timestamp bytes).
+     * Status byte: 0xB0 | (channel - 1)
      * CC Number: ccNumber & 0x7F
      * CC Value: value & 0x7F
      */
@@ -16,33 +22,30 @@ object BleMidiPacketParser {
         value: Int,
         timestampMs: Long = System.currentTimeMillis()
     ): ByteArray {
-        val ts = (timestampMs and 0x1FFF).toInt() // 13-bit timestamp
-        val header = 0x80 or ((ts shr 7) and 0x3F)
-        val timestamp = 0x80 or (ts and 0x7F)
-        val status = 0xB0 or (channel and 0x0F)
-        val data1 = ccNumber and 0x7F
-        val data2 = value and 0x7F
-
-        return byteArrayOf(
-            header.toByte(),
-            timestamp.toByte(),
-            status.toByte(),
-            data1.toByte(),
-            data2.toByte()
+        val ch0 = if (channel in 1..16) channel - 1 else channel.coerceIn(0, 15)
+        val packet = byteArrayOf(
+            (0xB0 or ch0).toByte(),
+            (ccNumber and 0x7F).toByte(),
+            (value and 0x7F).toByte()
         )
+        logDebug("BleMidiPacketParser", "Created Raw CC Packet: channel=$channel (0-based=$ch0), cc=$ccNumber, val=$value, bytes=${packet.joinToString(" ") { "0x%02X".format(it) }}")
+        return packet
     }
 
     /**
-     * Parses incoming BLE MIDI packet bytes into a list of [MidiCcMessage] objects.
+     * Parses incoming MIDI packet bytes (supporting both raw MIDI and BLE-MIDI packets) into a list of [MidiCcMessage] objects.
      */
     fun parse(bytes: ByteArray): List<MidiCcMessage> {
+        logDebug("BleMidiPacketParser", "Parsing incoming bytes: ${bytes.joinToString(" ") { "0x%02X".format(it) }}")
         if (bytes.size < 3) return emptyList()
 
         val messages = mutableListOf<MidiCcMessage>()
         var i = 0
 
-        // In BLE MIDI, byte 0 is the header byte (bit 7 set)
-        if ((bytes[0].toInt() and 0x80) != 0) {
+        val firstByte = bytes[0].toInt() and 0xFF
+        val isBleMidiHeader = (firstByte and 0x80) != 0 && (firstByte and 0x40) == 0 && (bytes.size > 1 && (bytes[1].toInt() and 0x80) != 0)
+
+        if (isBleMidiHeader) {
             i = 1
         }
 
@@ -52,8 +55,7 @@ object BleMidiPacketParser {
             var b = bytes[i].toInt() and 0xFF
 
             // In BLE MIDI, a timestamp byte (bit 7 set) precedes a status byte or running status data
-            if ((b and 0x80) != 0 && i + 1 < bytes.size && (bytes[i + 1].toInt() and 0x80) != 0) {
-                // bytes[i] is a timestamp byte preceding a status byte
+            if (isBleMidiHeader && (b and 0x80) != 0 && i + 1 < bytes.size && (bytes[i + 1].toInt() and 0x80) != 0) {
                 i++
                 if (i >= bytes.size) break
                 b = bytes[i].toInt() and 0xFF

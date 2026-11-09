@@ -38,7 +38,16 @@ class MainViewModel(
     val matrixMidiChannels: StateFlow<Map<OutputGroup, Int>> = repository.getMatrixMidiChannels()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val transportMidiChannel: StateFlow<Int> = repository.getTransportMidiChannel()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
+
+    private val _isPlaying = MutableStateFlow(false)
+    val isPlaying: StateFlow<Boolean> = _isPlaying.asStateFlow()
+
     val routesExpanded: StateFlow<Map<OutputGroup, Boolean>> = repository.getRoutesExpanded()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
+    val songChannelsExpanded: StateFlow<Map<OutputGroup, Boolean>> = repository.getSongChannelsExpanded()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
     val channelVisibilities: StateFlow<Map<String, Boolean>> = repository.getChannelVisibilities()
@@ -61,7 +70,8 @@ class MainViewModel(
         soloStates,
         homeRoutes,
         routesExpanded,
-        channelVisibilities
+        channelVisibilities,
+        songChannelsExpanded
     ) { flows ->
         @Suppress("UNCHECKED_CAST")
         val group = flows[0] as OutputGroup
@@ -81,8 +91,11 @@ class MainViewModel(
         val expandedMap = flows[7] as Map<OutputGroup, Boolean>
         @Suppress("UNCHECKED_CAST")
         val visibilities = flows[8] as Map<String, Boolean>
+        @Suppress("UNCHECKED_CAST")
+        val songExpandedMap = flows[9] as Map<OutputGroup, Boolean>
 
         val isExpanded = expandedMap[group] ?: false
+        val isSongExpanded = songExpandedMap[group] ?: true
 
         (0..18).mapNotNull { chIndex ->
             val key = "${group.name}_$chIndex"
@@ -93,6 +106,11 @@ class MainViewModel(
 
             // If routes are collapsed, hide route channels (indices 1, 2, 3, 4: Path 1A, 1B, 2A, 2B)
             if (!isExpanded && chIndex in 1..4) {
+                return@mapNotNull null
+            }
+
+            // If song channels are collapsed, hide song channels (indices 6..13: CH 1..8)
+            if (!isSongExpanded && chIndex in 6..13) {
                 return@mapNotNull null
             }
 
@@ -243,9 +261,48 @@ class MainViewModel(
         }
     }
 
+    fun saveTransportMidiChannel(channel: Int) {
+        viewModelScope.launch {
+            repository.saveTransportMidiChannel(channel)
+        }
+    }
+
+    private fun getTransportMidiChannel0Based(): Int {
+        val channel1Based = transportMidiChannel.value
+        return (channel1Based - 1).coerceIn(0, 15)
+    }
+
+    fun sendTransportPrev() {
+        val ch = getTransportMidiChannel0Based()
+        bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 0)
+    }
+
+    fun sendTransportReturnToZero() {
+        val ch = getTransportMidiChannel0Based()
+        bleMidiManager.sendControlChange(channel = ch, ccNumber = 47, value = 127)
+    }
+
+    fun toggleTransportPlay() {
+        val newPlaying = !_isPlaying.value
+        _isPlaying.value = newPlaying
+        val ch = getTransportMidiChannel0Based()
+        bleMidiManager.sendControlChange(channel = ch, ccNumber = 51, value = 127)
+    }
+
+    fun sendTransportNext() {
+        val ch = getTransportMidiChannel0Based()
+        bleMidiManager.sendControlChange(channel = ch, ccNumber = 49, value = 127)
+    }
+
     fun toggleRoutesExpanded(group: OutputGroup, expanded: Boolean) {
         viewModelScope.launch {
             repository.saveRoutesExpanded(group, expanded)
+        }
+    }
+
+    fun toggleSongChannelsExpanded(group: OutputGroup, expanded: Boolean) {
+        viewModelScope.launch {
+            repository.saveSongChannelsExpanded(group, expanded)
         }
     }
 

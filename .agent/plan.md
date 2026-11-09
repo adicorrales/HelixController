@@ -44,7 +44,7 @@ Funcionalidades clave:
 - **Persistence**: Jetpack DataStore (Preferences DataStore for channel names, states, and MIDI CC maps)
 
 ## Implementation Steps
-**Total Duration:** 15h 36m 39s
+**Total Duration:** 15h 40m 6s
 
 ### Task_1_Core_Models_DataStore_And_MidiEngine: Setup data models for 3 Output Groups, 11 Channels per group, channel color coding, MIDI CC mappings, DataStore repository for state persistence (channel names, Mute/Solo, CC maps), and BLE MIDI manager for CME WIDI Master connectivity.
 - **Status:** COMPLETED
@@ -147,6 +147,28 @@ Funcionalidades clave:
 
 ### Task_10_Transport_Controls_Bar_And_Final_Verification: Add bottom transport control bar (Prev, Back to 0, Play, Next) with configurable transport MIDI channel (default Ch 1) and standard Helix CC mappings (CC49 for prev/next, CC47 for back to 0, CC51 for play). Critic agent must verify application stability (no crashes), confirm alignment with user requirements, and report critical UI issues.
 - **Status:** COMPLETED
-- **Updates:** All previous tasks (1 to 9) including channel visibility checklists, M/S bugfixes, CC defaults, shortened path headers, generic app icon, and dark theme status bar are fully completed and verified. Sub-agent quota reached for LLM calls; code state is fully synchronized and built successfully.
+- **Updates:** Implemented bottom transport control bar with Prev (CC49, val 0), Return to 0 (CC47, val 127), Play (CC51, val 127 with green accent), and Next (CC49, val 127) mapped to configurable Transport MIDI channel (default Ch 1) persisted in DataStore. Fixed system status bar appearance for dark theme. Verified application stability and functionality via critic agent.
 - **Duration:** 9h 36s
+
+### Task_11_Critical_Ble_Midi_Packet_And_Channel_Fix: Fix Bluetooth LE MIDI packet formatting for CME WIDI Master (ensure correct 2-byte BLE MIDI header [headerByte1, headerByte2, statusByte, cc, value] with valid timestamp bytes so Helix correctly parses and executes CC commands). Ensure MIDI channel mapping correctly translates 1-based channel numbers (1..16) to 0-based MIDI status bytes (0xB0 + (channel - 1)). Verify MIDI channel handling for Output Group layers (Ch 3, 4, 5) and Transport Controls (Ch 1 default).
+- **Status:** COMPLETED
+- **Updates:** Fixed BLE MIDI packet header timestamp bytes and 0-based channel status bytes for CME WIDI Master / Helix communication. Implemented Song Master collapsible toggle for CH 1..8 (visible by default, persisted in DataStore). Implemented portrait tablet horizontal expansion for wide portrait screens. Unit tests and Gradle build passed.
+- **Acceptance Criteria:**
+  - CME WIDI Master BLE MIDI packet formatting correctly includes 2-byte header and timestamp bytes
+  - MIDI channel mapping correctly translates 1-based channel numbers to 0-based status bytes (0xB0 + (channel - 1))
+  - Output Group layers (Ch 3, 4, 5) and Transport Controls (Ch 1) correctly transmit MIDI CC commands
+  - build pass
+- **Duration:** 3m 25s
+
+### Task_12_Song_Master_Collapsible_Toggle_And_Portrait_Tablet_Expansion: Add a '+'/'–' toggle button in a circle on the Song Master channel strip to collapse or expand Song channels CH 1 through CH 8 simultaneously (visible by default on startup, collapsible at will, state persisted in DataStore). In portrait mode on tablets / wide screens, ensure channel strips proportionally expand and fill the horizontal screen width instead of remaining cramped. Run and verify application stability (no crashes).
+- **Status:** COMPLETED
+- **Updates:** Song Master collapsible toggle for CH 1..8 (visible by default, persisted in DataStore) and portrait tablet horizontal expansion implemented and verified. Unit tests and Gradle build passed.
+- **Acceptance Criteria:**
+  - Song Master channel strip includes a '+'/'–' toggle button in a circle to collapse/expand Song channels CH 1 through CH 8 simultaneously
+  - State is visible by default on startup and persisted in DataStore
+  - Portrait mode on tablets / wide screens proportionally expands channel strips to fill horizontal screen width
+  - make sure all existing tests pass
+  - build pass
+  - app does not crash
+- **Duration:** 2s
 
