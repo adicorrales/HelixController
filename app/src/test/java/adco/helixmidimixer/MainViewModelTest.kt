@@ -11,6 +11,7 @@ import adco.helixmidimixer.midi.BleMidiManager
 import adco.helixmidimixer.ui.viewmodel.MainViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
@@ -18,6 +19,8 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -138,5 +141,85 @@ class MainViewModelTest {
         assertEquals(3, sent.channel)
         assertEquals(86, sent.ccNumber)
         assertEquals(127, sent.value)
+    }
+
+    @Test
+    fun testIncomingMuteCcSetsExplicitBooleanState() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.channelStates.collect {} }
+        viewModel.selectOutputGroup(OutputGroup.OUTPUT_1_4)
+        // Mute CC for channelIndex 0 on OUTPUT_1_4 is CC 57
+        val muteCc = 57
+
+        // 1. Send CC 57 with value 127 (Muted)
+        bleMidiManager.emitIncomingCc(muteCc, 127)
+        var ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertTrue(ch0State?.isMuted == true)
+
+        // 2. Send CC 57 with value 0 (Unmuted)
+        bleMidiManager.emitIncomingCc(muteCc, 0)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertFalse(ch0State?.isMuted == true)
+
+        // 3. Send CC 57 with value 127 again (Muted) -> must explicitly set to true, not toggle back to false
+        bleMidiManager.emitIncomingCc(muteCc, 127)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertTrue(ch0State?.isMuted == true)
+    }
+
+    @Test
+    fun testIncomingSoloCcSetsExplicitBooleanState() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.channelStates.collect {} }
+        viewModel.selectOutputGroup(OutputGroup.OUTPUT_1_4)
+        // Solo CC for channelIndex 0 on OUTPUT_1_4 is CC 80
+        val soloCc = 80
+
+        // 1. Send CC 80 with value 127 (Soloed)
+        bleMidiManager.emitIncomingCc(soloCc, 127)
+        var ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertTrue(ch0State?.isSoloed == true)
+
+        // 2. Send CC 80 with value 0 (Unsoloed)
+        bleMidiManager.emitIncomingCc(soloCc, 0)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertFalse(ch0State?.isSoloed == true)
+
+        // 3. Send CC 80 with value 127 again -> must explicitly set to true
+        bleMidiManager.emitIncomingCc(soloCc, 127)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertTrue(ch0State?.isSoloed == true)
+    }
+
+    @Test
+    fun testIncomingVolumeCcSetsCoercedVolume() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.channelStates.collect {} }
+        viewModel.selectOutputGroup(OutputGroup.OUTPUT_1_4)
+        // Volume CC for channelIndex 0 on OUTPUT_1_4 is CC 11
+        val volumeCc = 11
+
+        bleMidiManager.emitIncomingCc(volumeCc, 85)
+        var ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertEquals(85, ch0State?.volume)
+
+        // Out of bounds value -> should coerce to 127
+        bleMidiManager.emitIncomingCc(volumeCc, 150)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertEquals(127, ch0State?.volume)
+    }
+
+    @Test
+    fun testIncomingPanCcSetsCoercedPan() = runTest(testDispatcher) {
+        backgroundScope.launch { viewModel.channelStates.collect {} }
+        viewModel.selectOutputGroup(OutputGroup.OUTPUT_1_4)
+        // Pan CC for channelIndex 0 on OUTPUT_1_4 is CC 34
+        val panCc = 34
+
+        bleMidiManager.emitIncomingCc(panCc, 20)
+        var ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertEquals(20, ch0State?.pan)
+
+        // Out of bounds value -> should coerce to 0
+        bleMidiManager.emitIncomingCc(panCc, -10)
+        ch0State = viewModel.channelStates.value.find { it.channelIndex == 0 }
+        assertEquals(0, ch0State?.pan)
     }
 }

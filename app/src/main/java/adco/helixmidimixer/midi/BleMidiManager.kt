@@ -75,6 +75,10 @@ open class BleMidiManager(private val context: Context) {
     private val _incomingMidiCc = MutableSharedFlow<MidiCcMessage>(extraBufferCapacity = 64)
     val incomingMidiCc: SharedFlow<MidiCcMessage> = _incomingMidiCc.asSharedFlow()
 
+    suspend fun emitIncomingCc(ccNumber: Int, value: Int, channel: Int = 0) {
+        _incomingMidiCc.emit(MidiCcMessage(channel, ccNumber, value))
+    }
+
     private val scanCallback = object : ScanCallback() {
         @SuppressLint("MissingPermission")
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
