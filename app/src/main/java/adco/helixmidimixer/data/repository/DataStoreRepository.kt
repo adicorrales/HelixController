@@ -39,6 +39,9 @@ class DataStoreRepository(
         fun soloStateKey(group: OutputGroup, channelIndex: Int): Preferences.Key<Boolean> =
             booleanPreferencesKey("solo_${group.name}_$channelIndex")
 
+        fun channelVisibilityKey(group: OutputGroup, channelIndex: Int): Preferences.Key<Boolean> =
+            booleanPreferencesKey("visibility_${group.name}_$channelIndex")
+
         fun homeRouteKey(group: OutputGroup): Preferences.Key<String> =
             stringPreferencesKey("home_route_${group.name}")
 
@@ -47,6 +50,22 @@ class DataStoreRepository(
 
         fun routesExpandedKey(group: OutputGroup): Preferences.Key<Boolean> =
             booleanPreferencesKey("routes_expanded_${group.name}")
+
+        val TRANSPORT_MIDI_CHANNEL_KEY: Preferences.Key<Int> =
+            intPreferencesKey("transport_midi_channel")
+    }
+
+    // --- Transport MIDI Channel ---
+    fun getTransportMidiChannel(): Flow<Int> {
+        return dataStore.data.map { prefs ->
+            prefs[TRANSPORT_MIDI_CHANNEL_KEY] ?: 1
+        }
+    }
+
+    suspend fun saveTransportMidiChannel(channel: Int) {
+        dataStore.edit { prefs ->
+            prefs[TRANSPORT_MIDI_CHANNEL_KEY] = channel.coerceIn(1, 16)
+        }
     }
 
     // --- Matrix MIDI Channels ---
@@ -126,7 +145,7 @@ class DataStoreRepository(
         return dataStore.data.map { prefs ->
             val map = mutableMapOf<String, Boolean>()
             for (group in OutputGroup.entries) {
-                for (ch in 0..10) {
+                for (ch in 0..18) {
                     val isMuted = prefs[muteStateKey(group, ch)] ?: false
                     map["${group.name}_$ch"] = isMuted
                 }
@@ -146,7 +165,7 @@ class DataStoreRepository(
         return dataStore.data.map { prefs ->
             val map = mutableMapOf<String, Boolean>()
             for (group in OutputGroup.entries) {
-                for (ch in 0..10) {
+                for (ch in 0..18) {
                     val isSoloed = prefs[soloStateKey(group, ch)] ?: false
                     map["${group.name}_$ch"] = isSoloed
                 }
@@ -158,6 +177,26 @@ class DataStoreRepository(
     suspend fun saveSoloState(group: OutputGroup, channelIndex: Int, isSoloed: Boolean) {
         dataStore.edit { prefs ->
             prefs[soloStateKey(group, channelIndex)] = isSoloed
+        }
+    }
+
+    // --- Channel Visibilities ---
+    fun getChannelVisibilities(): Flow<Map<String, Boolean>> {
+        return dataStore.data.map { prefs ->
+            val map = mutableMapOf<String, Boolean>()
+            for (group in OutputGroup.entries) {
+                for (ch in 0..18) {
+                    val isVisible = prefs[channelVisibilityKey(group, ch)] ?: true
+                    map["${group.name}_$ch"] = isVisible
+                }
+            }
+            map
+        }
+    }
+
+    suspend fun saveChannelVisibility(group: OutputGroup, channelIndex: Int, isVisible: Boolean) {
+        dataStore.edit { prefs ->
+            prefs[channelVisibilityKey(group, channelIndex)] = isVisible
         }
     }
 

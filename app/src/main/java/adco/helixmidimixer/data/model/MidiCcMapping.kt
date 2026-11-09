@@ -29,11 +29,7 @@ data class MidiCcMapping(
         fun makeKey(group: OutputGroup, channelIndex: Int): String = "${group.name}_$channelIndex"
 
         fun defaultChannelCc(group: OutputGroup, channelIndex: Int): ChannelCc {
-            val groupOffset = when (group) {
-                OutputGroup.OUTPUT_1_4 -> 0
-                OutputGroup.XLR -> 20
-                OutputGroup.PHONES -> 25
-            }
+            val groupOffset = 0 // Identical across Ch 3 (OUTPUT_1_4), Ch 4 (XLR), and Ch 5 (PHONES) layers
             val idx = channelIndex.coerceIn(0, 18)
             return ChannelCc(
                 volumeCc = (11 + idx + groupOffset).coerceAtMost(127),

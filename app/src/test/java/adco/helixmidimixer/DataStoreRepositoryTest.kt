@@ -4,7 +4,6 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import adco.helixmidimixer.data.model.HomeRoute
-import adco.helixmidimixer.data.model.MidiCcMapping
 import adco.helixmidimixer.data.model.OutputGroup
 import adco.helixmidimixer.data.repository.DataStoreRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -44,11 +43,9 @@ class DataStoreRepositoryTest {
 
     @Test
     fun testSongChannelNamesPersistence() = runTest(testDispatcher) {
-        // Initial names should be empty map
         var names = repository.getSongChannelNames().first()
         assertTrue(names.isEmpty())
 
-        // Save song channel 1 and song channel 3 names
         repository.saveSongChannelName(1, "Guitar Lead")
         repository.saveSongChannelName(3, "Bass Synth")
 
@@ -59,29 +56,34 @@ class DataStoreRepositoryTest {
     }
 
     @Test
-    fun testMuteAndSoloPersistence() = runTest(testDispatcher) {
-        // Test initial mute states
+    fun testMuteAndSoloPersistenceForHighChannels() = runTest(testDispatcher) {
         var mutes = repository.getMuteStates().first()
-        assertFalse(mutes["${OutputGroup.XLR.name}_2"] ?: true)
+        assertFalse(mutes["${OutputGroup.XLR.name}_15"] ?: true)
 
-        // Save mute state
-        repository.saveMuteState(OutputGroup.XLR, 2, true)
+        repository.saveMuteState(OutputGroup.XLR, 15, true)
         mutes = repository.getMuteStates().first()
-        assertTrue(mutes["${OutputGroup.XLR.name}_2"] ?: false)
+        assertTrue(mutes["${OutputGroup.XLR.name}_15"] ?: false)
 
-        // Save solo state
-        repository.saveSoloState(OutputGroup.PHONES, 0, true)
+        repository.saveSoloState(OutputGroup.PHONES, 18, true)
         val solos = repository.getSoloStates().first()
-        assertTrue(solos["${OutputGroup.PHONES.name}_0"] ?: false)
+        assertTrue(solos["${OutputGroup.PHONES.name}_18"] ?: false)
+    }
+
+    @Test
+    fun testChannelVisibilityPersistence() = runTest(testDispatcher) {
+        var visibilities = repository.getChannelVisibilities().first()
+        assertTrue(visibilities["${OutputGroup.OUTPUT_1_4.name}_6"] ?: false)
+
+        repository.saveChannelVisibility(OutputGroup.OUTPUT_1_4, 6, false)
+        visibilities = repository.getChannelVisibilities().first()
+        assertFalse(visibilities["${OutputGroup.OUTPUT_1_4.name}_6"] ?: true)
     }
 
     @Test
     fun testHomeRoutePersistence() = runTest(testDispatcher) {
-        // Initial route is 1A
         var routes = repository.getHomeRoutes().first()
         assertEquals(HomeRoute.ROUTE_1A, routes[OutputGroup.OUTPUT_1_4])
 
-        // Save route 2B
         repository.saveHomeRoute(OutputGroup.OUTPUT_1_4, HomeRoute.ROUTE_2B)
         routes = repository.getHomeRoutes().first()
         assertEquals(HomeRoute.ROUTE_2B, routes[OutputGroup.OUTPUT_1_4])

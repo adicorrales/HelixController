@@ -41,6 +41,9 @@ class MainViewModel(
     val routesExpanded: StateFlow<Map<OutputGroup, Boolean>> = repository.getRoutesExpanded()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
 
+    val channelVisibilities: StateFlow<Map<String, Boolean>> = repository.getChannelVisibilities()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+
     val bleConnectionState: StateFlow<BleConnectionState> = bleMidiManager.connectionState
     val scannedDevices: StateFlow<List<BleDeviceInfo>> = bleMidiManager.scannedDevices
 
@@ -57,7 +60,8 @@ class MainViewModel(
         muteStates,
         soloStates,
         homeRoutes,
-        routesExpanded
+        routesExpanded,
+        channelVisibilities
     ) { flows ->
         @Suppress("UNCHECKED_CAST")
         val group = flows[0] as OutputGroup
@@ -75,16 +79,23 @@ class MainViewModel(
         val routes = flows[6] as Map<OutputGroup, HomeRoute>
         @Suppress("UNCHECKED_CAST")
         val expandedMap = flows[7] as Map<OutputGroup, Boolean>
+        @Suppress("UNCHECKED_CAST")
+        val visibilities = flows[8] as Map<String, Boolean>
 
         val isExpanded = expandedMap[group] ?: false
 
         (0..18).mapNotNull { chIndex ->
+            val key = "${group.name}_$chIndex"
+            val isVisible = visibilities[key] ?: true
+            if (!isVisible) {
+                return@mapNotNull null
+            }
+
             // If routes are collapsed, hide route channels (indices 1, 2, 3, 4: Path 1A, 1B, 2A, 2B)
             if (!isExpanded && chIndex in 1..4) {
                 return@mapNotNull null
             }
 
-            val key = "${group.name}_$chIndex"
             val customName = if (chIndex in 6..13) {
                 val songIdx = chIndex - 5 // 1..8
                 songNames[songIdx]
@@ -186,6 +197,13 @@ class MainViewModel(
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).soloCc
         val midiCh = getMidiChannelForGroup(group)
         bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = if (isSoloed) 127 else 0)
+    }
+
+    fun toggleChannelVisibility(channelIndex: Int, isVisible: Boolean) {
+        val group = _selectedGroup.value
+        viewModelScope.launch {
+            repository.saveChannelVisibility(group, channelIndex, isVisible)
+        }
     }
 
     fun clearAllSolos() {

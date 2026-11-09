@@ -372,7 +372,13 @@ private fun BottomChannelArea(
 private fun getChannelHeaderTag(channelState: ChannelState): String {
     return when (channelState.config.type) {
         ChannelType.HOME -> "HOME"
-        ChannelType.ROUTE -> channelState.config.defaultName.uppercase()
+        ChannelType.ROUTE -> when (channelState.channelIndex) {
+            1 -> "1A"
+            2 -> "1B"
+            3 -> "2A"
+            4 -> "2B"
+            else -> channelState.config.defaultName.uppercase()
+        }
         ChannelType.SONG_MASTER -> "MASTER"
         ChannelType.SONG_CHANNEL -> "CH ${channelState.channelIndex - 5}"
         ChannelType.CLICK -> "CLICK"

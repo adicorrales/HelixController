@@ -33,6 +33,7 @@ fun HelixStadiumMixerScreen(
     val midiCcMapping by viewModel.midiCcMapping.collectAsStateWithLifecycle()
     val matrixMidiChannels by viewModel.matrixMidiChannels.collectAsStateWithLifecycle()
     val routesExpanded by viewModel.routesExpanded.collectAsStateWithLifecycle()
+    val channelVisibilities by viewModel.channelVisibilities.collectAsStateWithLifecycle()
     val bleConnectionState by viewModel.bleConnectionState.collectAsStateWithLifecycle()
     val scannedDevices by viewModel.scannedDevices.collectAsStateWithLifecycle()
 
@@ -97,9 +98,11 @@ fun HelixStadiumMixerScreen(
         MidiCcCustomizationDialog(
             initialMapping = midiCcMapping,
             matrixMidiChannels = matrixMidiChannels,
+            channelVisibilities = channelVisibilities,
             currentGroup = selectedGroup,
             onSaveMapping = { newMapping -> viewModel.updateMidiCcMapping(newMapping) },
             onSaveMatrixMidiChannel = { group, ch -> viewModel.saveMatrixMidiChannel(group, ch) },
+            onToggleChannelVisibility = { chIdx, visible -> viewModel.toggleChannelVisibility(chIdx, visible) },
             onDismiss = { showCcDialog = false }
         )
     }

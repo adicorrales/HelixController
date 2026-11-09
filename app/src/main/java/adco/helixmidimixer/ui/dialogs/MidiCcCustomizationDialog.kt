@@ -27,6 +27,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -73,9 +75,11 @@ private enum class CcType { VOLUME, PAN, MUTE, SOLO }
 fun MidiCcCustomizationDialog(
     initialMapping: MidiCcMapping,
     matrixMidiChannels: Map<OutputGroup, Int>,
+    channelVisibilities: Map<String, Boolean>,
     currentGroup: OutputGroup,
     onSaveMapping: (MidiCcMapping) -> Unit,
     onSaveMatrixMidiChannel: (OutputGroup, Int) -> Unit,
+    onToggleChannelVisibility: (Int, Boolean) -> Unit,
     onDismiss: () -> Unit
 ) {
     var mapping by remember { mutableStateOf(initialMapping) }
@@ -230,6 +234,15 @@ fun MidiCcCustomizationDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
+                        text = "Show",
+                        modifier = Modifier.width(44.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        ),
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
                         text = "Channel",
                         modifier = Modifier.weight(1.3f),
                         style = MaterialTheme.typography.labelSmall.copy(
@@ -288,10 +301,14 @@ fun MidiCcCustomizationDialog(
                     items(19) { chIndex ->
                         val config = ChannelConfig.getConfigForIndex(chIndex)
                         val chCc = mapping.getChannelCc(selectedGroupTab, chIndex)
+                        val key = "${selectedGroupTab.name}_$chIndex"
+                        val isVisible = channelVisibilities[key] ?: true
 
                         MatrixRowItem(
                             chIndex = chIndex,
                             channelName = getChannelLabel(config),
+                            isVisible = isVisible,
+                            onVisibilityChanged = { visible -> onToggleChannelVisibility(chIndex, visible) },
                             chCc = chCc,
                             onEditCell = { ccType ->
                                 editingTarget = Triple(selectedGroupTab, chIndex, ccType)
@@ -385,6 +402,8 @@ fun MidiCcCustomizationDialog(
 private fun MatrixRowItem(
     chIndex: Int,
     channelName: String,
+    isVisible: Boolean,
+    onVisibilityChanged: (Boolean) -> Unit,
     chCc: ChannelCc,
     onEditCell: (CcType) -> Unit
 ) {
@@ -396,9 +415,21 @@ private fun MatrixRowItem(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 4.dp, horizontal = 4.dp),
+                .padding(vertical = 2.dp, horizontal = 4.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Visibility Checkbox
+            Checkbox(
+                checked = isVisible,
+                onCheckedChange = onVisibilityChanged,
+                colors = CheckboxDefaults.colors(
+                    checkedColor = HelixGreenPrimary,
+                    uncheckedColor = HelixTextSecondary,
+                    checkmarkColor = Color.White
+                ),
+                modifier = Modifier.size(32.dp)
+            )
+
             // Channel Name Label
             Text(
                 text = channelName,
