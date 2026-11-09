@@ -24,11 +24,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -37,7 +36,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import adco.helixmidimixer.ui.theme.HelixBadgeBg
-import adco.helixmidimixer.ui.theme.HelixBadgeText
 import adco.helixmidimixer.ui.theme.HelixCardBorder
 import adco.helixmidimixer.ui.theme.HelixGreenPrimary
 import adco.helixmidimixer.ui.theme.HelixMidiMixerTheme
@@ -56,28 +54,18 @@ fun VerticalFader(
 ) {
     var componentHeightPx by remember { mutableFloatStateOf(1f) }
 
-    // Convert 0..127 value to dB display string (calibrated to Helix hardware specs)
+    // Convert 0..127 value to dB display string (calibrated to Helix hardware specs: 0 = -120dB, 127 = +6dB)
     val dbText = remember(value) {
         val clamped = value.coerceIn(0, 127)
-        when {
-            clamped == 0 -> "-inf dB"
-            clamped <= 12 -> {
-                val db = -120.0 + (clamped - 0) * ((-79.0 - (-120.0)) / 12.0)
-                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
-            }
-            clamped <= 62 -> {
-                val db = -79.0 + (clamped - 12) * ((-20.0 - (-79.0)) / (62.0 - 12.0))
-                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
-            }
-            clamped <= 108 -> {
-                val db = -20.0 + (clamped - 62) * ((0.0 - (-20.0)) / (108.0 - 62.0))
-                "${String.format(java.util.Locale.US, "%.1f", db)} dB"
-            }
-            else -> {
-                val db = 0.0 + (clamped - 108) * ((6.0 - 0.0) / (127.0 - 108.0))
-                "+${String.format(java.util.Locale.US, "%.1f", db)} dB"
-            }
+        val db = when {
+            clamped == 0 -> -120.0
+            clamped <= 12 -> -120.0 + (clamped - 0) * ((-79.0 - (-120.0)) / 12.0)
+            clamped <= 62 -> -79.0 + (clamped - 12) * ((-20.0 - (-79.0)) / (62.0 - 12.0))
+            clamped <= 108 -> -20.0 + (clamped - 62) * ((0.0 - (-20.0)) / (108.0 - 62.0))
+            else -> 0.0 + (clamped - 108) * ((6.0 - 0.0) / (127.0 - 108.0))
         }
+        if (db >= 0) "+${String.format(java.util.Locale.US, "%.1f", db)} dB"
+        else "${String.format(java.util.Locale.US, "%.1f", db)} dB"
     }
 
     Column(
