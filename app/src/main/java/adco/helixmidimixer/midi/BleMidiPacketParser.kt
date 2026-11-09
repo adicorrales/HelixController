@@ -43,7 +43,7 @@ object BleMidiPacketParser {
         var i = 0
 
         val firstByte = bytes[0].toInt() and 0xFF
-        val isBleMidiHeader = (firstByte and 0x80) != 0 && (firstByte and 0x40) == 0 && (bytes.size > 1 && (bytes[1].toInt() and 0x80) != 0)
+        val isBleMidiHeader = (firstByte and 0x80) != 0 && (firstByte and 0x40) == 0 && (bytes[1].toInt() and 0x80) != 0
 
         if (isBleMidiHeader) {
             i = 1

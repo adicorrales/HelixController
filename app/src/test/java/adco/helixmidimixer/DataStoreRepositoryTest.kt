@@ -118,4 +118,21 @@ class DataStoreRepositoryTest {
         val savedCh = repository.getTransportMidiChannel().first()
         assertEquals(5, savedCh)
     }
+
+    @Test
+    fun testMatrixMidiChannelsPersistence() = runTest(testDispatcher) {
+        val defaultChannels = repository.getMatrixMidiChannels().first()
+        assertEquals(3, defaultChannels[OutputGroup.OUTPUT_1_4])
+        assertEquals(4, defaultChannels[OutputGroup.XLR])
+        assertEquals(5, defaultChannels[OutputGroup.PHONES])
+
+        repository.saveMatrixMidiChannel(OutputGroup.OUTPUT_1_4, 1)
+        repository.saveMatrixMidiChannel(OutputGroup.XLR, 10)
+        repository.saveMatrixMidiChannel(OutputGroup.PHONES, 16)
+
+        val updatedChannels = repository.getMatrixMidiChannels().first()
+        assertEquals(1, updatedChannels[OutputGroup.OUTPUT_1_4])
+        assertEquals(10, updatedChannels[OutputGroup.XLR])
+        assertEquals(16, updatedChannels[OutputGroup.PHONES])
+    }
 }

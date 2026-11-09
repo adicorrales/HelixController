@@ -36,7 +36,15 @@ class MainViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), MidiCcMapping())
 
     val matrixMidiChannels: StateFlow<Map<OutputGroup, Int>> = repository.getMatrixMidiChannels()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), emptyMap())
+        .stateIn(
+            viewModelScope,
+            SharingStarted.WhileSubscribed(5000),
+            mapOf(
+                OutputGroup.OUTPUT_1_4 to 3,
+                OutputGroup.XLR to 4,
+                OutputGroup.PHONES to 5
+            )
+        )
 
     val transportMidiChannel: StateFlow<Int> = repository.getTransportMidiChannel()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1)
@@ -200,10 +208,10 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveMuteState(group, channelIndex, isMuted)
         }
-        // Send BLE MIDI CC (0 for off, 127 for on >= 64)
+        // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).muteCc
         val midiCh = getMidiChannelForGroup(group)
-        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = if (isMuted) 127 else 0)
+        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = 127)
     }
 
     fun toggleSolo(channelIndex: Int, isSoloed: Boolean) {
@@ -211,10 +219,10 @@ class MainViewModel(
         viewModelScope.launch {
             repository.saveSoloState(group, channelIndex, isSoloed)
         }
-        // Send BLE MIDI CC (0 for off, 127 for on >= 64)
+        // Send BLE MIDI CC (value 127 >= 64 to toggle state per Helix specification)
         val ccNum = midiCcMapping.value.getChannelCc(group, channelIndex).soloCc
         val midiCh = getMidiChannelForGroup(group)
-        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = if (isSoloed) 127 else 0)
+        bleMidiManager.sendControlChange(channel = midiCh, ccNumber = ccNum, value = 127)
     }
 
     fun toggleChannelVisibility(channelIndex: Int, isVisible: Boolean) {
