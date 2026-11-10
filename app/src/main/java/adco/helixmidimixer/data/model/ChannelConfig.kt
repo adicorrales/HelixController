@@ -19,7 +19,7 @@ data class ChannelConfig(
             // Channel 4: Route 2B
             add(ChannelConfig(4, "Path 2B", ChannelType.ROUTE, ChannelColorCategory.LIGHT_GREEN))
             // Channel 5: Song Master
-            add(ChannelConfig(5, "Song Master", ChannelType.SONG_MASTER, ChannelColorCategory.LIGHT_SILVER))
+            add(ChannelConfig(5, "Song", ChannelType.SONG_MASTER, ChannelColorCategory.LIGHT_SILVER))
             // Channels 6..13: CH 1 .. CH 8
             for (i in 1..8) {
                 add(ChannelConfig(5 + i, "CH $i", ChannelType.SONG_CHANNEL, ChannelColorCategory.LIGHT_SILVER))

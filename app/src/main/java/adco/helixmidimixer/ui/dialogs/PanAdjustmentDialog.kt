@@ -125,7 +125,7 @@ fun PanAdjustmentDialog(
                     OutlinedButton(
                         onClick = { currentPan = 0 },
                         shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier.height(32.dp)
+                        modifier = Modifier.height(42.dp)
                     ) {
                         Text("Left (0)", fontSize = 11.sp)
                     }
@@ -134,7 +134,7 @@ fun PanAdjustmentDialog(
                         onClick = { currentPan = 64 },
                         shape = RoundedCornerShape(6.dp),
                         colors = ButtonDefaults.buttonColors(containerColor = HelixGreenHeader),
-                        modifier = Modifier.height(32.dp)
+                        modifier = Modifier.height(42.dp)
                     ) {
                         Text("Center (64)", fontSize = 11.sp)
                     }
@@ -142,7 +142,7 @@ fun PanAdjustmentDialog(
                     OutlinedButton(
                         onClick = { currentPan = 127 },
                         shape = RoundedCornerShape(6.dp),
-                        modifier = Modifier.height(32.dp)
+                        modifier = Modifier.height(42.dp)
                     ) {
                         Text("Right (127)", fontSize = 11.sp)
                     }
