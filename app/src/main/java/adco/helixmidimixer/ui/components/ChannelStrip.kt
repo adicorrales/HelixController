@@ -385,7 +385,7 @@ private fun getChannelHeaderTag(channelState: ChannelState): String {
             else -> channelState.config.defaultName.uppercase()
         }
         ChannelType.SONG_MASTER -> "MASTER"
-        ChannelType.SONG_CHANNEL -> "CH ${channelState.channelIndex - 5}"
+        ChannelType.SONG_CHANNEL -> "TR ${channelState.channelIndex - 5}"
         ChannelType.CLICK -> "CLICK"
         ChannelType.COUNT_IN -> "COUNT IN"
         ChannelType.USB_IN -> "USB IN"

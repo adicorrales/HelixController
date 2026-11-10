@@ -20,9 +20,9 @@ data class ChannelConfig(
             add(ChannelConfig(4, "Path 2B", ChannelType.ROUTE, ChannelColorCategory.LIGHT_GREEN))
             // Channel 5: Song Master
             add(ChannelConfig(5, "Song", ChannelType.SONG_MASTER, ChannelColorCategory.LIGHT_SILVER))
-            // Channels 6..13: CH 1 .. CH 8
+            // Channels 6..13: Song Tracks TR 1 .. TR 8
             for (i in 1..8) {
-                add(ChannelConfig(5 + i, "CH $i", ChannelType.SONG_CHANNEL, ChannelColorCategory.LIGHT_SILVER))
+                add(ChannelConfig(5 + i, "Track $i", ChannelType.SONG_CHANNEL, ChannelColorCategory.LIGHT_SILVER))
             }
             // Channel 14: Click
             add(ChannelConfig(14, "Click", ChannelType.CLICK, ChannelColorCategory.LIGHT_BLUE))
@@ -31,7 +31,7 @@ data class ChannelConfig(
             // Channel 16: USB In 1/2
             add(ChannelConfig(16, "USB In 1/2", ChannelType.USB_IN, ChannelColorCategory.LIGHT_BLUE))
             // Channel 17: Bluetooth In
-            add(ChannelConfig(17, "Bluetooth In", ChannelType.BT_IN, ChannelColorCategory.LIGHT_BLUE))
+            add(ChannelConfig(17, "BT In", ChannelType.BT_IN, ChannelColorCategory.LIGHT_BLUE))
             // Channel 18: Aux In
             add(ChannelConfig(18, "Aux In", ChannelType.AUX_IN, ChannelColorCategory.LIGHT_BLUE))
         }
