@@ -74,6 +74,9 @@ fun MatrixTopBar(
     val configuration = LocalConfiguration.current
     val isSmallPortrait = configuration.orientation != Configuration.ORIENTATION_LANDSCAPE &&
         (configuration.smallestScreenWidthDp < 600 || configuration.screenWidthDp < 600)
+    val hideTitle = configuration.screenWidthDp < 700
+    val compactOutputs = configuration.screenWidthDp < 800
+    val compactBle = configuration.screenWidthDp < 600
 
     Surface(
         modifier = modifier
@@ -102,7 +105,7 @@ fun MatrixTopBar(
                         .background(HelixGreenPrimary)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                if (!isSmallPortrait) {
+                if (!hideTitle) {
                     Text(
                         text = "HELIX STADIUM MATRIX",
                         style = MaterialTheme.typography.titleMedium.copy(
@@ -128,21 +131,21 @@ fun MatrixTopBar(
                     group = OutputGroup.OUTPUT_1_4,
                     icon = Icons.Rounded.Cable,
                     isSelected = selectedGroup == OutputGroup.OUTPUT_1_4,
-                    compact = isSmallPortrait,
+                    compact = compactOutputs,
                     onClick = { onOutputGroupSelected(OutputGroup.OUTPUT_1_4) }
                 )
                 OutputGroupToggleItem(
                     group = OutputGroup.XLR,
                     icon = Icons.Rounded.Mic,
                     isSelected = selectedGroup == OutputGroup.XLR,
-                    compact = isSmallPortrait,
+                    compact = compactOutputs,
                     onClick = { onOutputGroupSelected(OutputGroup.XLR) }
                 )
                 OutputGroupToggleItem(
                     group = OutputGroup.PHONES,
                     icon = Icons.Rounded.Headphones,
                     isSelected = selectedGroup == OutputGroup.PHONES,
-                    compact = isSmallPortrait,
+                    compact = compactOutputs,
                     onClick = { onOutputGroupSelected(OutputGroup.PHONES) }
                 )
             }
@@ -155,6 +158,7 @@ fun MatrixTopBar(
                 // Bluetooth status button (WIDI Master connection status)
                 BleStatusButton(
                     connectionState = bleConnectionState,
+                    compact = compactBle,
                     onClick = onOpenBleDialog
                 )
 
@@ -245,6 +249,7 @@ private fun OutputGroupToggleItem(
 @Composable
 private fun BleStatusButton(
     connectionState: BleConnectionState,
+    compact: Boolean = false,
     onClick: () -> Unit
 ) {
     val (statusText, statusColor, statusIcon) = when (connectionState) {
@@ -294,7 +299,7 @@ private fun BleStatusButton(
             .background(HelixBadgeBg)
             .border(1.dp, statusColor.copy(alpha = 0.6f), RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 10.dp, vertical = 6.dp),
+            .padding(horizontal = if (compact) 6.dp else 10.dp, vertical = 6.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
@@ -311,14 +316,16 @@ private fun BleStatusButton(
             tint = statusColor,
             modifier = Modifier.size(16.dp)
         )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = statusText,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.SemiBold,
-                color = HelixTextPrimary
+        if (!compact) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = statusText,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = FontWeight.SemiBold,
+                    color = HelixTextPrimary
+                )
             )
-        )
+        }
     }
 }
 

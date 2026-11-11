@@ -39,7 +39,7 @@ fun EditChannelNameDialog(
         onDismissRequest = onDismiss,
         title = {
             Text(
-                text = "Rename Song $songIndex Channel",
+                text = "Rename Song $songIndex Track",
                 style = MaterialTheme.typography.titleMedium.copy(
                     fontWeight = FontWeight.Bold,
                     color = HelixTextPrimary
@@ -49,7 +49,7 @@ fun EditChannelNameDialog(
         text = {
             Column {
                 Text(
-                    text = "Enter custom name for Song $songIndex:",
+                    text = "Enter custom name for Track $songIndex:",
                     style = MaterialTheme.typography.bodySmall.copy(color = HelixTextSecondary)
                 )
                 Spacer(modifier = Modifier.height(12.dp))
@@ -57,7 +57,7 @@ fun EditChannelNameDialog(
                     value = textInput,
                     onValueChange = { textInput = it },
                     singleLine = true,
-                    placeholder = { Text("Song $songIndex") },
+                    placeholder = { Text("Track $songIndex") },
                     colors = OutlinedTextFieldDefaults.colors(
                         focusedBorderColor = HelixGreenPrimary,
                         unfocusedBorderColor = HelixCardBorder,
