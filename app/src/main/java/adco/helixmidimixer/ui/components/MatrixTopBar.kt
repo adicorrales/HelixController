@@ -107,7 +107,7 @@ fun MatrixTopBar(
                 Spacer(modifier = Modifier.width(8.dp))
                 if (!hideTitle) {
                     Text(
-                        text = "HELIX STADIUM MATRIX",
+                        text = "HELIX MATRIX",
                         style = MaterialTheme.typography.titleMedium.copy(
                             fontWeight = FontWeight.Bold,
                             letterSpacing = 1.2.sp,

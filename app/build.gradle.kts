@@ -6,6 +6,7 @@ plugins {
 }
 
 android {
+
     namespace = "adco.helixmidimixer"
     compileSdk {
         version = release(37)
@@ -21,8 +22,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("debug")
             optimization {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
