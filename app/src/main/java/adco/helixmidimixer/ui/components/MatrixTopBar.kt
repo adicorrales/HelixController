@@ -38,7 +38,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import android.content.res.Configuration
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
@@ -69,6 +71,10 @@ fun MatrixTopBar(
     modifier: Modifier = Modifier,
     onDisconnect: (() -> Unit)? = null
 ) {
+    val configuration = LocalConfiguration.current
+    val isSmallPortrait = configuration.orientation != Configuration.ORIENTATION_LANDSCAPE &&
+        (configuration.smallestScreenWidthDp < 600 || configuration.screenWidthDp < 600)
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -96,14 +102,16 @@ fun MatrixTopBar(
                         .background(HelixGreenPrimary)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "HELIX STADIUM MATRIX",
-                    style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 1.2.sp,
-                        color = HelixTextPrimary
+                if (!isSmallPortrait) {
+                    Text(
+                        text = "HELIX STADIUM MATRIX",
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            letterSpacing = 1.2.sp,
+                            color = HelixTextPrimary
+                        )
                     )
-                )
+                }
             }
 
             // Center: Output Group Selector Toggle Buttons (1/4", XLR, Phones)
@@ -120,18 +128,21 @@ fun MatrixTopBar(
                     group = OutputGroup.OUTPUT_1_4,
                     icon = Icons.Rounded.Cable,
                     isSelected = selectedGroup == OutputGroup.OUTPUT_1_4,
+                    compact = isSmallPortrait,
                     onClick = { onOutputGroupSelected(OutputGroup.OUTPUT_1_4) }
                 )
                 OutputGroupToggleItem(
                     group = OutputGroup.XLR,
                     icon = Icons.Rounded.Mic,
                     isSelected = selectedGroup == OutputGroup.XLR,
+                    compact = isSmallPortrait,
                     onClick = { onOutputGroupSelected(OutputGroup.XLR) }
                 )
                 OutputGroupToggleItem(
                     group = OutputGroup.PHONES,
                     icon = Icons.Rounded.Headphones,
                     isSelected = selectedGroup == OutputGroup.PHONES,
+                    compact = isSmallPortrait,
                     onClick = { onOutputGroupSelected(OutputGroup.PHONES) }
                 )
             }
@@ -192,6 +203,7 @@ private fun OutputGroupToggleItem(
     group: OutputGroup,
     icon: ImageVector,
     isSelected: Boolean,
+    compact: Boolean = false,
     onClick: () -> Unit
 ) {
     val backgroundColor by animateColorAsState(
@@ -217,14 +229,16 @@ private fun OutputGroupToggleItem(
             tint = contentColor,
             modifier = Modifier.size(16.dp)
         )
-        Spacer(modifier = Modifier.width(6.dp))
-        Text(
-            text = group.displayName,
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                color = contentColor
+        if (!compact) {
+            Spacer(modifier = Modifier.width(6.dp))
+            Text(
+                text = group.displayName,
+                style = MaterialTheme.typography.labelSmall.copy(
+                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                    color = contentColor
+                )
             )
-        )
+        }
     }
 }
 

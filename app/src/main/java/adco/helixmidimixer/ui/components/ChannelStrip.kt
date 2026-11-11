@@ -82,11 +82,13 @@ fun ChannelStrip(
     onSoloToggled: (Boolean) -> Unit,
     onHomeRouteChanged: (HomeRoute) -> Unit,
     onOpenPanDialog: () -> Unit,
+    onOpenVolumeDialog: () -> Unit = {},
     onChannelRenameRequested: () -> Unit,
     isRoutesExpanded: Boolean = false,
     onToggleRoutesExpanded: ((Boolean) -> Unit)? = null,
     isSongChannelsExpanded: Boolean = true,
     onToggleSongChannelsExpanded: ((Boolean) -> Unit)? = null,
+    isCompact: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     // Determine category styling
@@ -267,15 +269,56 @@ fun ChannelStrip(
 
             Spacer(modifier = Modifier.height(4.dp))
 
-            // 4. Vertical Volume Fader
-            VerticalFader(
-                value = channelState.volume,
-                volumeCc = volumeCc,
-                onValueChange = onVolumeChanged,
-                accentColor = accentColor,
-                isMuted = channelState.isMuted,
-                modifier = Modifier.weight(1f)
-            )
+            // 4. Vertical Volume Fader (or compact volume button on small screens)
+            if (isCompact) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .weight(1f)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(HelixBadgeBg)
+                        .border(0.5.dp, HelixCardBorder, RoundedCornerShape(6.dp))
+                        .clickable(onClick = onOpenVolumeDialog)
+                        .padding(vertical = 8.dp, horizontal = 2.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = "VOL",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                color = HelixTextSecondary
+                            )
+                        )
+                        Text(
+                            text = volumeValueToDbText(channelState.volume),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 9.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = if (channelState.isMuted) Color(0xFFE53E3E) else accentColor
+                            ),
+                            maxLines = 1
+                        )
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "Val ${channelState.volume}",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 8.sp,
+                                color = HelixTextSecondary
+                            )
+                        )
+                    }
+                }
+            } else {
+                VerticalFader(
+                    value = channelState.volume,
+                    volumeCc = volumeCc,
+                    onValueChange = onVolumeChanged,
+                    accentColor = accentColor,
+                    isMuted = channelState.isMuted,
+                    modifier = Modifier.weight(1f)
+                )
+            }
 
             Spacer(modifier = Modifier.height(4.dp))
 

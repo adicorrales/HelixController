@@ -32,6 +32,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
+import android.content.res.Configuration
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -52,6 +54,9 @@ fun TransportBar(
     modifier: Modifier = Modifier,
     onOpenSettings: (() -> Unit)? = null
 ) {
+    val configuration = LocalConfiguration.current
+    val isCompact = configuration.smallestScreenWidthDp < 600
+
     Surface(
         modifier = modifier
             .fillMaxWidth()
@@ -64,18 +69,19 @@ fun TransportBar(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 10.dp),
+                .padding(horizontal = if (isCompact) 8.dp else 16.dp, vertical = 10.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center
         ) {
             Row(
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(if (isCompact) 4.dp else 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 // Prev Button
                 TransportButton(
                     label = "PREV",
                     icon = Icons.Rounded.SkipPrevious,
+                    compact = isCompact,
                     onClick = onPrev
                 )
 
@@ -83,6 +89,7 @@ fun TransportBar(
                 TransportButton(
                     label = "RT0",
                     icon = Icons.Rounded.Replay,
+                    compact = isCompact,
                     onClick = onReturnToZero
                 )
 
@@ -92,6 +99,7 @@ fun TransportBar(
                     icon = if (isPlaying) Icons.Rounded.Pause else Icons.Rounded.PlayArrow,
                     isActive = isPlaying,
                     activeColor = HelixGreenPrimary,
+                    compact = isCompact,
                     onClick = onPlayToggle
                 )
 
@@ -99,6 +107,7 @@ fun TransportBar(
                 TransportButton(
                     label = "NEXT",
                     icon = Icons.Rounded.SkipNext,
+                    compact = isCompact,
                     onClick = onNext
                 )
 
@@ -107,6 +116,7 @@ fun TransportBar(
                     TransportButton(
                         label = "SET",
                         icon = Icons.Rounded.Settings,
+                        compact = isCompact,
                         onClick = onOpenSettings
                     )
                 }
@@ -121,6 +131,7 @@ private fun TransportButton(
     icon: ImageVector,
     isActive: Boolean = false,
     activeColor: Color = HelixGreenPrimary,
+    compact: Boolean = false,
     onClick: () -> Unit
 ) {
     val backgroundColor = if (isActive) activeColor else HelixBadgeBg
@@ -133,7 +144,7 @@ private fun TransportButton(
             .background(backgroundColor)
             .border(1.dp, borderColor, RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
-            .padding(horizontal = 16.dp, vertical = 10.dp),
+            .padding(horizontal = if (compact) 8.dp else 16.dp, vertical = if (compact) 8.dp else 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center
     ) {
@@ -141,15 +152,18 @@ private fun TransportButton(
             imageVector = icon,
             contentDescription = label,
             tint = contentColor,
-            modifier = Modifier.size(20.dp)
+            modifier = Modifier.size(if (compact) 16.dp else 20.dp)
         )
-        Spacer(modifier = Modifier.width(6.dp))
+        Spacer(modifier = Modifier.width(if (compact) 4.dp else 6.dp))
         Text(
             text = label,
+            maxLines = 1,
+            softWrap = false,
+            overflow = androidx.compose.ui.text.style.TextOverflow.Clip,
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.Bold,
                 color = contentColor,
-                fontSize = 12.sp
+                fontSize = if (compact) 10.sp else 12.sp
             )
         )
     }

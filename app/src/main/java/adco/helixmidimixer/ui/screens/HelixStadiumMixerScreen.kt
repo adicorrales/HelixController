@@ -21,6 +21,7 @@ import adco.helixmidimixer.ui.dialogs.BluetoothMidiDialog
 import adco.helixmidimixer.ui.dialogs.EditChannelNameDialog
 import adco.helixmidimixer.ui.dialogs.MidiCcCustomizationDialog
 import adco.helixmidimixer.ui.dialogs.PanAdjustmentDialog
+import adco.helixmidimixer.ui.dialogs.VolumeAdjustmentDialog
 import adco.helixmidimixer.ui.dialogs.TransportSettingsDialog
 import adco.helixmidimixer.ui.theme.HelixBackground
 import adco.helixmidimixer.ui.viewmodel.MainViewModel
@@ -48,6 +49,7 @@ fun HelixStadiumMixerScreen(
     var showCcDialog by remember { mutableStateOf(false) }
     var showTransportSettingsDialog by remember { mutableStateOf(false) }
     var panChannelTarget by remember { mutableStateOf<Int?>(null) } // channelIndex
+    var volumeChannelTarget by remember { mutableStateOf<Int?>(null) } // channelIndex
     var renameSongTarget by remember { mutableStateOf<Int?>(null) } // songIndex (1..8)
 
     Scaffold(
@@ -93,6 +95,7 @@ fun HelixStadiumMixerScreen(
                 onSoloToggled = { chIdx, isSoloed -> viewModel.toggleSolo(chIdx, isSoloed) },
                 onHomeRouteChanged = { newRoute -> viewModel.updateHomeRoute(newRoute) },
                 onOpenPanDialog = { chIdx -> panChannelTarget = chIdx },
+                onOpenVolumeDialog = { chIdx -> volumeChannelTarget = chIdx },
                 onChannelRenameRequested = { songIdx -> renameSongTarget = songIdx },
                 onToggleRoutesExpanded = { group, expanded -> viewModel.toggleRoutesExpanded(group, expanded) },
                 onToggleSongChannelsExpanded = { group, expanded -> viewModel.toggleSongChannelsExpanded(group, expanded) }
@@ -149,6 +152,21 @@ fun HelixStadiumMixerScreen(
                 initialPan = chState.pan,
                 onPanChanged = { newPan -> viewModel.updatePan(chIdx, newPan) },
                 onDismiss = { panChannelTarget = null }
+            )
+        }
+    }
+
+    // 4b. Volume Adjustment Dialog (compact screens)
+    volumeChannelTarget?.let { chIdx ->
+        val chState = channelStates.find { channelState -> channelState.channelIndex == chIdx }
+        val volumeCc = midiCcMapping.getChannelCc(selectedGroup, chIdx).volumeCc
+        if (chState != null) {
+            VolumeAdjustmentDialog(
+                channelName = chState.effectiveName,
+                volumeCc = volumeCc,
+                initialVolume = chState.volume,
+                onVolumeChanged = { newVol -> viewModel.updateVolume(chIdx, newVol) },
+                onDismiss = { volumeChannelTarget = null }
             )
         }
     }

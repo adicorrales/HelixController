@@ -36,6 +36,7 @@ fun ChannelStripsRow(
     onSoloToggled: (channelIndex: Int, isSoloed: Boolean) -> Unit,
     onHomeRouteChanged: (newRoute: HomeRoute) -> Unit,
     onOpenPanDialog: (channelIndex: Int) -> Unit,
+    onOpenVolumeDialog: (channelIndex: Int) -> Unit = {},
     onChannelRenameRequested: (songIndex: Int) -> Unit,
     onToggleRoutesExpanded: (OutputGroup, Boolean) -> Unit,
     onToggleSongChannelsExpanded: (OutputGroup, Boolean) -> Unit,
@@ -44,6 +45,8 @@ fun ChannelStripsRow(
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
     val isTabletOrWidePortrait = !isLandscape && (configuration.smallestScreenWidthDp >= 600 || configuration.screenWidthDp >= 600)
+    val isPhone = configuration.smallestScreenWidthDp < 600
+    val isCompact = isPhone
     val isExpanded = routesExpanded[selectedGroup] ?: false
     val isSongExpanded = songChannelsExpanded[selectedGroup] ?: true
 
@@ -61,6 +64,7 @@ fun ChannelStripsRow(
             onSoloToggled = { isSoloed -> onSoloToggled(chState.channelIndex, isSoloed) },
             onHomeRouteChanged = onHomeRouteChanged,
             onOpenPanDialog = { onOpenPanDialog(chState.channelIndex) },
+            onOpenVolumeDialog = { onOpenVolumeDialog(chState.channelIndex) },
             onChannelRenameRequested = {
                 val songIdx = chState.channelIndex - 5 // 1..8
                 if (songIdx in 1..8) {
@@ -75,6 +79,7 @@ fun ChannelStripsRow(
             onToggleSongChannelsExpanded = if (chState.channelIndex == 5) {
                 { expanded -> onToggleSongChannelsExpanded(selectedGroup, expanded) }
             } else null,
+            isCompact = isCompact,
             modifier = stripModifier
         )
     }

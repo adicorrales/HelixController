@@ -288,6 +288,32 @@ fun VerticalFader(
     }
 }
 
+fun volumeValueToDbText(value: Int): String {
+    val clamped = value.coerceIn(0, 127)
+    val db = when {
+        clamped == 0 -> -120.0
+        clamped <= 10 -> -120.0 + (clamped - 0) * ((-86.0 - (-120.0)) / 10.0)
+        clamped <= 20 -> -86.0 + (clamped - 10) * ((-60.0 - (-86.0)) / (20.0 - 10.0))
+        clamped <= 30 -> -60.0 + (clamped - 20) * ((-46.0 - (-60.0)) / (30.0 - 20.0))
+        clamped <= 40 -> -46.0 + (clamped - 30) * ((-36.0 - (-46.0)) / (40.0 - 30.0))
+        clamped <= 50 -> -36.0 + (clamped - 40) * ((-28.0 - (-36.0)) / (50.0 - 40.0))
+        clamped <= 60 -> -28.0 + (clamped - 50) * ((-21.0 - (-28.0)) / (60.0 - 50.0))
+        clamped <= 70 -> -21.0 + (clamped - 60) * ((-16.0 - (-21.0)) / (70.0 - 60.0))
+        clamped <= 80 -> -16.0 + (clamped - 70) * ((-11.0 - (-16.0)) / (80.0 - 70.0))
+        clamped <= 90 -> -11.0 + (clamped - 80) * ((-6.0 - (-11.0)) / (90.0 - 80.0))
+        clamped <= 100 -> -6.0 + (clamped - 90) * ((-2.6 - (-6.0)) / (100.0 - 90.0))
+        clamped <= 108 -> -2.6 + (clamped - 100) * ((0.0 - (-2.6)) / (108.0 - 100.0))
+        clamped <= 120 -> 0.0 + (clamped - 108) * ((4.0 - (0.0)) / (120.0 - 108.0))
+        else -> 4.0 + (clamped - 120) * ((6.0 - 4.0) / (127.0 - 120.0))
+    }
+    val formatted = if (db in -9.9..6.0) {
+        String.format(java.util.Locale.US, "%.1f", db)
+    } else {
+        String.format(java.util.Locale.US, "%.0f", db)
+    }
+    return if (db > 0) "+$formatted dB" else "$formatted dB"
+}
+
 @Preview(showBackground = true, heightDp = 300)
 @Composable
 fun VerticalFaderPreview() {

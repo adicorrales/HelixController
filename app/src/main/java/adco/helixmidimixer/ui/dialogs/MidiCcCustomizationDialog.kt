@@ -166,23 +166,25 @@ fun MidiCcCustomizationDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 // Matrix MIDI Channel Selector for selected group
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(6.dp))
                         .background(HelixBadgeBg)
                         .border(1.dp, HelixCardBorder, RoundedCornerShape(6.dp))
                         .padding(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Matrix MIDI Channel (${selectedGroupTab.displayName}):",
+                        text = "Matrix MIDI Ch (${selectedGroupTab.displayName}):",
                         style = MaterialTheme.typography.labelMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = HelixTextPrimary
-                        )
+                        ),
+                        maxLines = 1,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
                     )
+                    Spacer(modifier = Modifier.height(6.dp))
                     val defaultCh = when (selectedGroupTab) {
                         OutputGroup.OUTPUT_1_4 -> 3
                         OutputGroup.XLR -> 4
@@ -340,8 +342,10 @@ fun MidiCcCustomizationDialog(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "Reset Defaults",
-                            style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFECC94B))
+                            text = "Reset",
+                            style = MaterialTheme.typography.labelSmall.copy(color = Color(0xFFECC94B)),
+                            maxLines = 1,
+                            softWrap = false
                         )
                     }
 
@@ -362,7 +366,7 @@ fun MidiCcCustomizationDialog(
                             shape = RoundedCornerShape(6.dp),
                             colors = ButtonDefaults.buttonColors(containerColor = HelixGreenPrimary)
                         ) {
-                            Text("Save Mapping", fontSize = 12.sp)
+                            Text("Save", fontSize = 12.sp, maxLines = 1, softWrap = false)
                         }
                     }
                 }
