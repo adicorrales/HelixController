@@ -603,7 +603,7 @@ private fun getChannelLabel(config: ChannelConfig): String {
         3 -> "3: Path 2A"
         4 -> "4: Path 2B"
         5 -> "5: Song Master"
-        in 6..13 -> "${config.index}: CH ${config.index - 5}"
+        in 6..13 -> "${config.index}: Track ${config.index - 5}"
         14 -> "14: Click"
         15 -> "15: Count In"
         16 -> "16: USB In 1/2"
